@@ -16,7 +16,7 @@ GO
 
 BEGIN TRANSACTION;
 
--- Pedido --
+/* Pedido */
 CREATE TABLE [MVM].[Pedido] (
 	[nro_pedido]			[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[sucursal_codigo]		[BIGINT],
@@ -28,7 +28,7 @@ CREATE TABLE [MVM].[Pedido] (
 ) ON [PRIMARY]
 GO
 
--- Detalle Pedido --
+/* Detalle Pedido */
 CREATE TABLE [MVM].[DetallePedido] (
 	[codigo]				[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[sucursal_codigo]		[BIGINT],
@@ -38,7 +38,7 @@ CREATE TABLE [MVM].[DetallePedido] (
 ) ON [PRIMARY]
 GO
 
--- Estado --
+/* Estado */
 CREATE TABLE [MVM].[Estado] (
 	[codigo]	 [BIGINT] IDENTITY(1,1)	NOT NULL,
 	[tipo]		 [NVARCHAR](255), --TODO chequear, es un enum
@@ -48,7 +48,7 @@ CREATE TABLE [MVM].[Estado] (
 ) ON [PRIMARY]
 GO
 
--- Pedido Cancelacion --
+/* Pedido Cancelacion */
 CREATE TABLE [MVM].[PedidoCancelacion] (
 	[codigo]	 [BIGINT] IDENTITY(1,1)	NOT NULL,
 	[fecha]		 [DATETIME2](6),
@@ -57,7 +57,7 @@ CREATE TABLE [MVM].[PedidoCancelacion] (
 ) ON [PRIMARY]
 GO
 
--- Sillon --
+/* Sillon */
 CREATE TABLE [MVM].[Sillon] (
 	[codigo]				[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[modelo_codigo]			[BIGINT],
@@ -67,7 +67,7 @@ CREATE TABLE [MVM].[Sillon] (
 ) ON [PRIMARY]
 GO
 
--- Medida --
+/* Medida */
 CREATE TABLE [MVM].[Medida] (
 	[codigo]		  [BIGINT] IDENTITY(1,1)	NOT NULL,
 	[alto]			  [DECIMAL](18,2),
@@ -77,7 +77,7 @@ CREATE TABLE [MVM].[Medida] (
 ) ON [PRIMARY]
 GO
 
--- Modelo --
+/* Modelo */
 CREATE TABLE [MVM].[Modelo] (
 	[codigo]		  [BIGINT] IDENTITY(1,1)	NOT NULL,
 	[modelo]		  [NVARCHAR](255),
@@ -86,7 +86,7 @@ CREATE TABLE [MVM].[Modelo] (
 ) ON [PRIMARY]
 GO
 
--- Material --
+/* Material */
 CREATE TABLE [MVM].[Material] (
 	[codigo]		  [BIGINT] IDENTITY(1,1)	NOT NULL,
 	[nombre]		  [NVARCHAR](255),
@@ -95,14 +95,14 @@ CREATE TABLE [MVM].[Material] (
 ) ON [PRIMARY]
 GO
 
--- Relleno -- 
+/* Relleno */ 
 CREATE TABLE [MVM].[Relleno] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
 	[densidad]		  [DECIMAL](18,2),
 ) ON [PRIMARY]
 GO
 
--- Madera -- 
+/* Madera */ 
 CREATE TABLE [MVM].[Madera] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
 	[color]			  [NVARCHAR](255),
@@ -110,7 +110,7 @@ CREATE TABLE [MVM].[Madera] (
 ) ON [PRIMARY]
 GO
 
--- Tela -- 
+/* Tela */ 
 CREATE TABLE [MVM].[Tela] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
 	[color]			  [NVARCHAR](255),
@@ -118,48 +118,138 @@ CREATE TABLE [MVM].[Tela] (
 ) ON [PRIMARY]
 GO
 
--- Sillon_Material --
-	
+/* Sillon_Material */
 CREATE TABLE Sillon_Material (
-    [codigo_sillon]		 [BIGINT],
-    [codigo_material]		 [BIGINT],
+    [codigo_sillon]		[BIGINT],
+    [codigo_material]	[BIGINT],
 );
 
+/* Proveedor */
+CREATE TABLE [MVM].[Proveedor] (
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[direccion_codigo]			[BIGINT],
+	[razon_social]				[NVARCHAR](255),
+	[cuit]						[NVARCHAR](255),
+	[medio_contacto_codigo]		[BIGINT],
+) ON [PRIMARY]
+GO
+
+/* Factura */
+CREATE TABLE [MVM].[Factura] (
+	[nro_factura]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[sucursal_codigo]			[BIGINT],
+	[cliente_codigo]			[BIGINT],
+	[fecha_hora]				[DATETIME2](6),
+	[fetalle_factura_codigo]	[BIGINT],
+	[total]						[DECIMAL](18)
+) ON [PRIMARY]
+GO
+
+/* Detalle Factura */
+CREATE TABLE [MVM].[DetalleFactura] (
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[detalle_pedido_codigo]		[BIGINT],
+	[precio_unitario]			[DECIMAL](18),
+	[cantidad]					[DECIMAL](18),
+	[subtotal]					[DECIMAL](18),
+) ON [PRIMARY]
+GO
+
+/* Envio */
+CREATE TABLE [MVM].[Envio] (
+	[nro_envio]					[DECIMAL](18) IDENTITY(1,1) NOT NULL,
+	[nro_factura]				[BIGINT],
+	[fecha_programada]			[DATETIME2](6),
+	[fecha_entrega]				[DATETIME2](6),
+	[total]						[DECIMAL](18),
+	[importe_traslado]			[DECIMAL](18),
+	[importe_subida]			[DECIMAL](18),
+) ON [PRIMARY]
+GO
+
+/* Compra */
+CREATE TABLE [MVM].[Compra] (
+	[nro_compra]				[DECIMAL](18) IDENTITY(1,1) NOT NULL,
+	[sucursal_codigo]			[BIGINT],
+	[proveedor_codigo]			[BIGINT],
+	[fecha]						[DATETIME2](6),
+	[detalle_compra_codigo]		[BIGINT],
+	[total]						[DECIMAL](18),
+) ON [PRIMARY]
+GO
+
+/* Detalle Compra */
+CREATE TABLE [MVM].[DetalleCompra] (
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[sucursal_codigo]			[BIGINT],
+	[material_codigo]			[BIGINT],
+	[precio_unitario]			[DECIMAL](18),
+	[cantidad]					[DECIMAL](18),
+	[subtotal]					[DECIMAL](18),
+) ON [PRIMARY]
+GO
+
 -------------------- Creación de primary keys ---------------------------
--- Pedido --
+
+/* Pedido */
 ALTER TABLE [MVM].[Pedido]
-ADD CONSTRAINT PK_Pedido PRIMARY KEY (nro_pedido,sucursal_codigo);
+ADD CONSTRAINT PK_Pedido PRIMARY KEY (nro_pedido, sucursal_codigo);
 
--- Detalle Pedido --
+/* Detalle Pedido */
 ALTER TABLE [MVM].[DetallePedido]
-ADD CONSTRAINT PK_DetallePedido PRIMARY KEY (codigo,sucursal_codigo);
+ADD CONSTRAINT PK_DetallePedido PRIMARY KEY (codigo, sucursal_codigo);
 
--- Estado --
+/* Estado */
 ALTER TABLE [MVM].[Estado]
 ADD CONSTRAINT PK_Estado PRIMARY KEY (codigo);
 
--- Pedido Cancelacion --
+/* Pedido Cancelacion */
 ALTER TABLE [MVM].[PedidoCancelacion]
 ADD CONSTRAINT PK_PedidoCancelacion PRIMARY KEY (codigo);
 
--- Sillon --
+/* Sillon */
 ALTER TABLE [MVM].[Sillon]
 ADD CONSTRAINT PK_Sillon PRIMARY KEY (codigo);
 
--- Medida --
+/* Medida */
 ALTER TABLE [MVM].[Medida]
 ADD CONSTRAINT PK_Medida PRIMARY KEY (codigo);
 
--- Modelo --
+/* Modelo */
 ALTER TABLE [MVM].[Modelo]
 ADD CONSTRAINT PK_Material PRIMARY KEY (codigo);
 
--- Material --
+/* Material */
 ALTER TABLE [MVM].[Material]
 ADD CONSTRAINT PK_Material PRIMARY KEY (codigo);
 
+/* Proveedor */
+ALTER TABLE [MVM].[Proveedor]
+ADD CONSTRAINT PK_Proveedor PRIMARY KEY (codigo);
+
+/* Factura */
+ALTER TABLE [MVM].[Factura]
+ADD CONSTRAINT PK_Factura PRIMARY KEY (nro_factura, sucursal_codigo);
+
+/* Detalle Factura */
+ALTER TABLE [MVM].[DetalleFactura]
+ADD CONSTRAINT PK_DetalleFactura PRIMARY KEY (codigo);
+
+/* Envio */
+ALTER TABLE [MVM].[Envio]
+ADD CONSTRAINT PK_Envio PRIMARY KEY (nro_envio);
+
+/* Compra */
+ALTER TABLE [MVM].[Compra]
+ADD CONSTRAINT PK_Compra PRIMARY KEY (nro_compra, sucursal_codigo);
+
+/* Detalle Compra */
+ALTER TABLE [MVM].[DetalleCompra]
+ADD CONSTRAINT PK_DetalleCompra PRIMARY KEY (codigo, sucursal_codigo);
+
 -------------------- Creación de foreign keys ---------------------------
--- Pedido --
+
+/* Pedido */
 ALTER TABLE [MVM].[Pedido]
 ADD CONSTRAINT FK_Pedido_Sucursal
 FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
@@ -176,22 +266,22 @@ ALTER TABLE [MVM].[Pedido]
 ADD CONSTRAINT FK_Pedido_Estado
 FOREIGN KEY (estado_actual_codigo) REFERENCES [MVM].[Estado](codigo);
 
--- Detalle Pedido --
+/* Detalle Pedido */
 ALTER TABLE [MVM].[DetallePedido]
 ADD CONSTRAINT FK_DetallePedido_Sucursal
 FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
 
--- Estado --
+/* Estado */
 ALTER TABLE [MVM].[Estado]
 ADD CONSTRAINT FK_Estado_Pedido
 FOREIGN KEY (nro_pedido) REFERENCES [MVM].[Pedido](nro_pedido);
 
--- Pedido Cancelacion --
+/* Pedido Cancelacion */
 ALTER TABLE [MVM].[PedidoCancelacion]
 ADD CONSTRAINT FK_PedidoCancelacion_Pedido
 FOREIGN KEY (nro_pedido) REFERENCES [MVM].[Pedido](nro_pedido);
 
--- Sillon --
+/* Sillon */
 ALTER TABLE [MVM].[Sillon]
 ADD CONSTRAINT FK_Sillon_Modelo
 FOREIGN KEY (modelo_codigo) REFERENCES [MVM].[Modelo](codigo);
@@ -208,18 +298,73 @@ ALTER TABLE [MVM].[Sillon]
 ADD CONSTRAINT FK_Sillon_DetallePedido
 FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
 
+/* Proveedor */
+ALTER TABLE [MVM].[Proveedor]
+ADD CONSTRAINT FK_Proveedor_Direccion
+FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[Direccion](codigo);
+
+ALTER TABLE [MVM].[Proveedor]
+ADD CONSTRAINT FK_Proveedor_Medio
+FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[MedioDeContacto](codigo);
+
+/* Factura */
+ALTER TABLE [MVM].[Factura]
+ADD CONSTRAINT FK_Factura_Sucursal
+FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
+
+ALTER TABLE [MVM].[Factura]
+ADD CONSTRAINT FK_Factura_Cliente
+FOREIGN KEY (cliente_codigo) REFERENCES [MVM].[Cliente](codigo);
+
+ALTER TABLE [MVM].[Factura]
+ADD CONSTRAINT FK_Factura_Detalle
+FOREIGN KEY (detalle_factura_codigo) REFERENCES [MVM].[DetalleFactura](codigo);
+
+/* Detalle Factura */
+ALTER TABLE [MVM].[DetalleFactura]
+ADD CONSTRAINT FK_DetalleFactura_DetallePedido
+FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
+
+/* Envio */
+ALTER TABLE [MVM].[Envio]
+ADD CONSTRAINT FK_Envio_Factura
+FOREIGN KEY (nro_factura) REFERENCES [MVM].[Factura](nro_factura);
+
+/* Compra */
+ALTER TABLE [MVM].[Compra]
+ADD CONSTRAINT FK_Compra_Sucursal
+FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
+
+ALTER TABLE [MVM].[Compra]
+ADD CONSTRAINT FK_Compra_Provvedor
+FOREIGN KEY (proveedor_codigo) REFERENCES [MVM].[Proveedor](codigo);
+
+ALTER TABLE [MVM].[Compra]
+ADD CONSTRAINT FK_Compra_Detale
+FOREIGN KEY (detalle_compra_codigo) REFERENCES [MVM].[Detalle Compra](codigo);
+
+/* Detalle Compra */
+ALTER TABLE [MVM].[DetalleCompra]
+ADD CONSTRAINT FK_DetalleCompra_Sucursal
+FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
+
+ALTER TABLE [MVM].[DetalleCompra]
+ADD CONSTRAINT FK_DetalleCompra_Material
+FOREIGN KEY (material_codigo) REFERENCES [MVM].[Material](codigo);
+
  --------------------------- Claves primarias y foráneas para los subtipos  ---------------------------
--- Relleno --
+
+/* Relleno */
 ALTER TABLE Relleno
 ADD CONSTRAINT PK_Relleno PRIMARY KEY (codigo),
     CONSTRAINT FK_Relleno_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
 
--- Estado --
+/* Estado */
 ALTER TABLE Madera
 ADD CONSTRAINT PK_Madera PRIMARY KEY (codigo),
     CONSTRAINT FK_Madera_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
 
--- Tela --
+/* Tela */
 ALTER TABLE Madera
 ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
     CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
