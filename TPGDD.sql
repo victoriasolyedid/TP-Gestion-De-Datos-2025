@@ -1,7 +1,7 @@
 USE [GD1C2025]
 GO
 
--------------------- Creaci髇 del esquema ---------------------------
+-------------------- Creaci贸n del esquema ---------------------------
 
 CREATE SCHEMA [MVM]
 GO
@@ -12,7 +12,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
--------------------- Creaci髇 de las tablas ---------------------------
+-------------------- Creaci贸n de las tablas ---------------------------
 
 BEGIN TRANSACTION;
 
@@ -118,10 +118,17 @@ CREATE TABLE [MVM].[Tela] (
 ) ON [PRIMARY]
 GO
 
--------------------- Creaci髇 de primary keys ---------------------------
+-- Sillon_Material --
+	
+CREATE TABLE Sillon_Material (
+    [codigo_sillon]		 [BIGINT],
+    [codigo_material]		 [BIGINT],
+);
+
+-------------------- Creaci贸n de primary keys ---------------------------
 -- Pedido --
 ALTER TABLE [MVM].[Pedido]
-ADD CONSTRAINT PK_Pedido PRIMARY KEY (nro_pedido);
+ADD CONSTRAINT PK_Pedido PRIMARY KEY (nro_pedido,sucursal_codigo);
 
 -- Detalle Pedido --
 ALTER TABLE [MVM].[DetallePedido]
@@ -151,4 +158,68 @@ ADD CONSTRAINT PK_Material PRIMARY KEY (codigo);
 ALTER TABLE [MVM].[Material]
 ADD CONSTRAINT PK_Material PRIMARY KEY (codigo);
 
--------------------- Creaci髇 de foreign keys ---------------------------
+-------------------- Creaci贸n de foreign keys ---------------------------
+-- Pedido --
+ALTER TABLE [MVM].[Pedido]
+ADD CONSTRAINT FK_Pedido_Sucursal
+FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
+
+ALTER TABLE [MVM].[Pedido]
+ADD CONSTRAINT FK_Pedido_Cliente
+FOREIGN KEY (cliente_codigo) REFERENCES [MVM].[Cliente](codigo);
+
+ALTER TABLE [MVM].[Pedido]
+ADD CONSTRAINT FK_Pedido_Detalle_Pedido
+FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
+
+ALTER TABLE [MVM].[Pedido]
+ADD CONSTRAINT FK_Pedido_Estado
+FOREIGN KEY (estado_actual_codigo) REFERENCES [MVM].[Estado](codigo);
+
+-- Detalle Pedido --
+ALTER TABLE [MVM].[DetallePedido]
+ADD CONSTRAINT FK_DetallePedido_Sucursal
+FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
+
+-- Estado --
+ALTER TABLE [MVM].[Estado]
+ADD CONSTRAINT FK_Estado_Pedido
+FOREIGN KEY (nro_pedido) REFERENCES [MVM].[Pedido](nro_pedido);
+
+-- Pedido Cancelacion --
+ALTER TABLE [MVM].[PedidoCancelacion]
+ADD CONSTRAINT FK_PedidoCancelacion_Pedido
+FOREIGN KEY (nro_pedido) REFERENCES [MVM].[Pedido](nro_pedido);
+
+-- Sillon --
+ALTER TABLE [MVM].[Sillon]
+ADD CONSTRAINT FK_Sillon_Modelo
+FOREIGN KEY (modelo_codigo) REFERENCES [MVM].[Modelo](codigo);
+
+ALTER TABLE [MVM].[Sillon]
+ADD CONSTRAINT FK_Sillon_Medida
+FOREIGN KEY (medida_codigo) REFERENCES [MVM].[Medida](codigo);
+
+ALTER TABLE [MVM].[Sillon]
+ADD CONSTRAINT FK_Sillon_Material
+FOREIGN KEY (material_codigo) REFERENCES [MVM].[Material](codigo);
+
+ALTER TABLE [MVM].[Sillon]
+ADD CONSTRAINT FK_Sillon_DetallePedido
+FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
+
+ --------------------------- Claves primarias y for谩neas para los subtipos  ---------------------------
+-- Relleno --
+ALTER TABLE Relleno
+ADD CONSTRAINT PK_Relleno PRIMARY KEY (codigo),
+    CONSTRAINT FK_Relleno_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
+
+-- Estado --
+ALTER TABLE Madera
+ADD CONSTRAINT PK_Madera PRIMARY KEY (codigo),
+    CONSTRAINT FK_Madera_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
+
+-- Tela --
+ALTER TABLE Madera
+ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
+    CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
