@@ -147,21 +147,21 @@ GO
 
 /* Detalle Factura */
 CREATE TABLE [MVM].[DetalleFactura] (
-	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[detalle_pedido_codigo]		[BIGINT],
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[detalle_pedido_codigo]			[BIGINT],
 	[precio_unitario]			[DECIMAL](18),
-	[cantidad]					[DECIMAL](18),
-	[subtotal]					[DECIMAL](18)
+	[cantidad]				[DECIMAL](18),
+	[subtotal]				[DECIMAL](18)
 ) ON [PRIMARY]
 GO
 
 /* Envio */
 CREATE TABLE [MVM].[Envio] (
-	[nro_envio]					[DECIMAL](18) IDENTITY(1,1) NOT NULL,
+	[nro_envio]				[DECIMAL](18) IDENTITY(1,1) NOT NULL,
 	[nro_factura]				[BIGINT],
 	[fecha_programada]			[DATETIME2](6),
 	[fecha_entrega]				[DATETIME2](6),
-	[total]						[DECIMAL](18),
+	[total]					[DECIMAL](18),
 	[importe_traslado]			[DECIMAL](18),
 	[importe_subida]			[DECIMAL](18)
 ) ON [PRIMARY]
@@ -172,23 +172,35 @@ CREATE TABLE [MVM].[Compra] (
 	[nro_compra]				[DECIMAL](18) IDENTITY(1,1) NOT NULL,
 	[sucursal_codigo]			[BIGINT],
 	[proveedor_codigo]			[BIGINT],
-	[fecha]						[DATETIME2](6),
-	[detalle_compra_codigo]		[BIGINT],
-	[total]						[DECIMAL](18)
+	[fecha]					[DATETIME2](6),
+	[detalle_compra_codigo]			[BIGINT],
+	[total]					[DECIMAL](18)
 ) ON [PRIMARY]
 GO
 
 /* Detalle Compra */
 CREATE TABLE [MVM].[DetalleCompra] (
-	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
 	[sucursal_codigo]			[BIGINT],
 	[material_codigo]			[BIGINT],
 	[precio_unitario]			[DECIMAL](18),
-	[cantidad]					[DECIMAL](18),
-	[subtotal]					[DECIMAL](18)
+	[cantidad]				[DECIMAL](18),
+	[subtotal]				[DECIMAL](18)
 ) ON [PRIMARY]
 GO
 
+/* Cliente */
+CREATE TABLE [MVM].[Cliente] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[dni]					[BIGINT],
+	[nombre]				[NVARCHAR](255),
+	[apellido]				[NVARCHAR](255),
+	[fecha_nacimiento]			[DATETIME2](6),
+	[direccion_codigo]			[BIGINT],
+	[medio_contacto_codigo]			[BIGINT]
+) ON [PRIMARY]
+GO
+	
 -------------------- Creación de primary keys ---------------------------
 
 /* Pedido */
@@ -250,6 +262,10 @@ ADD CONSTRAINT PK_Compra PRIMARY KEY (nro_compra, sucursal_codigo);
 /* Detalle Compra */
 ALTER TABLE [MVM].[DetalleCompra]
 ADD CONSTRAINT PK_DetalleCompra PRIMARY KEY (codigo, sucursal_codigo);
+
+/* Cliente */
+ALTER TABLE [MVM].[Cliente]
+ADD CONSTRAINT PK_Cliente PRIMARY KEY (codigo);
 
 -------------------- Creación de foreign keys ---------------------------
 
@@ -366,6 +382,15 @@ FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
 ALTER TABLE [MVM].[DetalleCompra]
 ADD CONSTRAINT FK_DetalleCompra_Material
 FOREIGN KEY (material_codigo) REFERENCES [MVM].[Material](codigo);
+
+/* Cliente */
+ALTER TABLE [MVM].[Cliente]
+ADD CONSTRAINT FK_Cliente_Direccion
+FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[Direccion](codigo);
+
+ALTER TABLE [MVM].[Cliente]
+ADD CONSTRAINT FK_Cliente_MedioContacto
+FOREIGN KEY (medio_contacto_codigo) REFERENCES [MVM].[MedioDeContacto](codigo);
 
  --------------------------- Claves primarias y foráneas para los subtipos  ---------------------------
 
