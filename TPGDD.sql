@@ -200,6 +200,47 @@ CREATE TABLE [MVM].[Cliente] (
 	[medio_contacto_codigo]			[BIGINT]
 ) ON [PRIMARY]
 GO
+
+/* Sucursal */
+CREATE TABLE [MVM].[Sucursal] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[nro_sucursal]				[BIGINT],
+	[direccion_codigo]			[BIGINT],						
+	[medio_contacto_codigo]			[BIGINT]						
+) ON [PRIMARY]
+GO
+
+/* Direccion */
+CREATE TABLE [MVM].[Direccion] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, -- PK
+	[provincia_codigo]			[BIGINT],						 -- FK
+	[localidad_codigo]			[BIGINT],						 -- FK
+	[calle]					[NVARCHAR](255),
+	[altura]				[SMALLINT]
+) ON [PRIMARY]
+GO
+
+/* Provincia */
+CREATE TABLE [MVM].[Provincia] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[nombre]				[NVARCHAR](255)				
+) ON [PRIMARY]
+GO
+
+/* Localidad */
+CREATE TABLE [MVM].[Localidad] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[nombre]				[NVARCHAR](255)				
+) ON [PRIMARY]
+GO
+
+/* Medio de Contacto */
+CREATE TABLE [MVM].[MedioDeContacto] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[tipo_medio]				[VARCHAR](10),				-- como hacer el ENUM?		 
+	[valor]					[NVARCHAR](255)				
+) ON [PRIMARY]
+GO
 	
 -------------------- Creación de primary keys ---------------------------
 
@@ -267,6 +308,26 @@ ADD CONSTRAINT PK_DetalleCompra PRIMARY KEY (codigo, sucursal_codigo);
 ALTER TABLE [MVM].[Cliente]
 ADD CONSTRAINT PK_Cliente PRIMARY KEY (codigo);
 
+/* Sucursal */
+ALTER TABLE [MVM].[Sucursal]
+ADD CONSTRAINT PK_Sucursal PRIMARY KEY (codigo);
+
+/* Direccion */
+ALTER TABLE [MVM].[Direccion]
+ADD CONSTRAINT PK_Direccion PRIMARY KEY (codigo);
+
+/* Localidad */
+ALTER TABLE [MVM].[Provincia]
+ADD CONSTRAINT PK_Provincia PRIMARY KEY (codigo);
+
+/* Provincia */
+ALTER TABLE [MVM].[Localidad]
+ADD CONSTRAINT PK_Localidad PRIMARY KEY (codigo);
+
+/* MedioDeContacto */
+ALTER TABLE [MVM].[MedioDeContacto]
+ADD CONSTRAINT PK_MedioDeContacto PRIMARY KEY (codigo);
+
 -------------------- Creación de foreign keys ---------------------------
 
 /* Pedido */
@@ -322,11 +383,11 @@ FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
 /* Sillon_Material */
 ALTER TABLE [MVM].[Sillon_Material]
 ADD CONSTRAINT FK_Sillon_Material_Sillon
-    FOREIGN KEY (codigo_sillon) REFERENCES [MVM].[Sillon](codigo);
+FOREIGN KEY (codigo_sillon) REFERENCES [MVM].[Sillon](codigo);
 
 ALTER TABLE [MVM].[Sillon_Material]
 ADD CONSTRAINT FK_Sillon_Material_Material
-    FOREIGN KEY (codigo_material) REFERENCES [MVM].[Material](codigo);
+FOREIGN KEY (codigo_material) REFERENCES [MVM].[Material](codigo);
 
 
 /* Proveedor */
@@ -391,6 +452,24 @@ FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[Direccion](codigo);
 ALTER TABLE [MVM].[Cliente]
 ADD CONSTRAINT FK_Cliente_MedioContacto
 FOREIGN KEY (medio_contacto_codigo) REFERENCES [MVM].[MedioDeContacto](codigo);
+
+/* Sucursal */
+ALTER TABLE [MVM].[Sucursal]
+ADD CONSTRAINT FK_Sucursal_Direccion
+FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[Direccion](codigo);
+
+ALTER TABLE [MVM].[Sucursal]
+ADD CONSTRAINT FK_Sucursal_MedioContacto
+FOREIGN KEY (medio_contacto_codigo) REFERENCES [MVM].[MedioDeContacto](codigo);
+
+/* Direccion */
+ALTER TABLE [MVM].[Direccion]
+ADD CONSTRAINT FK_Direccion_Provincia
+FOREIGN KEY (provincia_codigo) REFERENCES [MVM].[Provincia](codigo);
+
+ALTER TABLE [MVM].[Direccion]
+ADD CONSTRAINT FK_Direccion_Localidad
+FOREIGN KEY (localidad_codigo) REFERENCES [MVM].[Localidad](codigo);
 
  --------------------------- Claves primarias y foráneas para los subtipos  ---------------------------
 
