@@ -140,28 +140,28 @@ CREATE TABLE [MVM].[Factura] (
 	[sucursal_codigo]			[BIGINT],
 	[cliente_codigo]			[BIGINT],
 	[fecha_hora]				[DATETIME2](6),
-	[fetalle_factura_codigo]	[BIGINT],
+	[detalle_factura_codigo]	[BIGINT],
 	[total]						[DECIMAL](18)
 ) ON [PRIMARY]
 GO
 
 /* Detalle Factura */
 CREATE TABLE [MVM].[DetalleFactura] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
-	[detalle_pedido_codigo]			[BIGINT],
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[detalle_pedido_codigo]		[BIGINT],
 	[precio_unitario]			[DECIMAL](18),
-	[cantidad]				[DECIMAL](18),
-	[subtotal]				[DECIMAL](18)
+	[cantidad]					[DECIMAL](18),
+	[subtotal]					[DECIMAL](18)
 ) ON [PRIMARY]
 GO
 
 /* Envio */
 CREATE TABLE [MVM].[Envio] (
-	[nro_envio]				[DECIMAL](18) IDENTITY(1,1) NOT NULL,
+	[nro_envio]					[DECIMAL](18) IDENTITY(1,1) NOT NULL,
 	[nro_factura]				[BIGINT],
 	[fecha_programada]			[DATETIME2](6),
 	[fecha_entrega]				[DATETIME2](6),
-	[total]					[DECIMAL](18),
+	[total]						[DECIMAL](18),
 	[importe_traslado]			[DECIMAL](18),
 	[importe_subida]			[DECIMAL](18)
 ) ON [PRIMARY]
@@ -172,51 +172,51 @@ CREATE TABLE [MVM].[Compra] (
 	[nro_compra]				[DECIMAL](18) IDENTITY(1,1) NOT NULL,
 	[sucursal_codigo]			[BIGINT],
 	[proveedor_codigo]			[BIGINT],
-	[fecha]					[DATETIME2](6),
-	[detalle_compra_codigo]			[BIGINT],
-	[total]					[DECIMAL](18)
+	[fecha]						[DATETIME2](6),
+	[detalle_compra_codigo]		[BIGINT],
+	[total]						[DECIMAL](18)
 ) ON [PRIMARY]
 GO
 
 /* Detalle Compra */
 CREATE TABLE [MVM].[DetalleCompra] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
 	[sucursal_codigo]			[BIGINT],
 	[material_codigo]			[BIGINT],
 	[precio_unitario]			[DECIMAL](18),
-	[cantidad]				[DECIMAL](18),
-	[subtotal]				[DECIMAL](18)
+	[cantidad]					[DECIMAL](18),
+	[subtotal]					[DECIMAL](18)
 ) ON [PRIMARY]
 GO
 
 /* Cliente */
 CREATE TABLE [MVM].[Cliente] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
-	[dni]					[BIGINT],
-	[nombre]				[NVARCHAR](255),
-	[apellido]				[NVARCHAR](255),
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[dni]						[BIGINT],
+	[nombre]					[NVARCHAR](255),
+	[apellido]					[NVARCHAR](255),
 	[fecha_nacimiento]			[DATETIME2](6),
 	[direccion_codigo]			[BIGINT],
-	[medio_contacto_codigo]			[BIGINT]
+	[medio_contacto_codigo]		[BIGINT]
 ) ON [PRIMARY]
 GO
 
 /* Sucursal */
 CREATE TABLE [MVM].[Sucursal] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[nro_sucursal]				[BIGINT],
 	[direccion_codigo]			[BIGINT],						
-	[medio_contacto_codigo]			[BIGINT]						
+	[medio_contacto_codigo]		[BIGINT]						
 ) ON [PRIMARY]
 GO
 
 /* Direccion */
 CREATE TABLE [MVM].[Direccion] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, -- PK
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL, -- PK
 	[provincia_codigo]			[BIGINT],						 -- FK
 	[localidad_codigo]			[BIGINT],						 -- FK
-	[calle]					[NVARCHAR](255),
-	[altura]				[SMALLINT]
+	[calle]						[NVARCHAR](255),
+	[altura]					[SMALLINT]
 ) ON [PRIMARY]
 GO
 
@@ -237,7 +237,7 @@ GO
 /* Medio de Contacto */
 CREATE TABLE [MVM].[MedioDeContacto] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[tipo_medio]				[VARCHAR](10),				-- como hacer el ENUM?		 
+	[tipo_medio]			[VARCHAR](10),				-- como hacer el ENUM?		 
 	[valor]					[NVARCHAR](255)				
 ) ON [PRIMARY]
 GO
@@ -389,7 +389,6 @@ ALTER TABLE [MVM].[Sillon_Material]
 ADD CONSTRAINT FK_Sillon_Material_Material
 FOREIGN KEY (codigo_material) REFERENCES [MVM].[Material](codigo);
 
-
 /* Proveedor */
 ALTER TABLE [MVM].[Proveedor]
 ADD CONSTRAINT FK_Proveedor_Direccion
@@ -489,6 +488,7 @@ ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
     CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
 
 --------------------------- Migración de tablas ---------------------------
+
 /* Migracion Pedido */
 INSERT INTO [MVM].[Pedido] (nro_pedido,sucursal_codigo, cliente_codigo, fecha, detalle_pedido_codigo, total, estado_actual_codigo)
 SELECT DISTINCT Pedido_Numero, SUPER_NOMBRE, Pedido_Fecha, Pedido_Estado, Pedido_Total from gd_esquema.Maestra --chequear los fk
@@ -517,3 +517,109 @@ CREATE TABLE [MVM].[Estado] (
 GO
 
 [Pedido_Estado] [nvarchar](255) NULL,*/
+
+SELECT * FROM gd_esquema.Maestra
+
+/* Migracion Proveedor */
+
+INSERT INTO [MVM].[Proveedor] (razon_social, cuit)
+SELECT DISTINCT Proveedor_RazonSocial, Proveedor_Cuit FROM gd_esquema.Maestra
+
+-- código es autoincremental y no existe en la TM
+-- dirección cod, medio de contacto
+
+/*CREATE TABLE [MVM].[Proveedor] (
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[direccion_codigo]			[BIGINT],
+	[razon_social]				[NVARCHAR](255),
+	[cuit]						[NVARCHAR](255),
+	[medio_contacto_codigo]		[BIGINT]
+) ON [PRIMARY]
+GO*/
+
+/* Migracion Factura */
+
+INSERT INTO [MVM].[Factura] (nro_factura, fecha_hora, total)
+SELECT DISTINCT Factura_Numero, Factura_Fecha, Factura_Total FROM gd_esquema.Maestra
+
+-- sucursal codigo, cliente codigo, detalle fact codigo
+
+/*CREATE TABLE [MVM].[Factura] (
+	[nro_factura]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[sucursal_codigo]			[BIGINT],
+	[cliente_codigo]			[BIGINT],
+	[fecha_hora]				[DATETIME2](6),
+	[detalle_factura_codigo]	[BIGINT],
+	[total]						[DECIMAL](18)
+) ON [PRIMARY]
+GO*/
+
+/* Migracion Detalle Factura */
+
+INSERT INTO [MVM].[DetalleFactura] (precio_unitario, cantidad, subtotal)
+SELECT DISTINCT Detalle_Factura_Precio, Detalle_Factura_Cantidad, Detalle_Factura_SubTotal FROM gd_esquema.Maestra
+
+-- código es autoincremental y no existe en la TM
+-- detalle pedido cod
+
+/*CREATE TABLE [MVM].[DetalleFactura] (
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[detalle_pedido_codigo]		[BIGINT],
+	[precio_unitario]			[DECIMAL](18),
+	[cantidad]					[DECIMAL](18),
+	[subtotal]					[DECIMAL](18)
+) ON [PRIMARY]
+GO*/
+
+/* Migracion Envio */
+
+INSERT INTO [MVM].[Envio] (nro_envio, fecha_programada, fecha_entrega, total, importe_traslado, importe_subida)
+SELECT DISTINCT Envio_Numero, Envio_Fecha_Programada, Envio_Fecha, Envio_Total, Envio_ImporteTraslado, Envio_importeSubida FROM gd_esquema.Maestra
+
+-- nro_factura
+
+/*CREATE TABLE [MVM].[Envio] (
+	[nro_envio]					[DECIMAL](18) IDENTITY(1,1) NOT NULL,
+	[nro_factura]				[BIGINT],
+	[fecha_programada]			[DATETIME2](6),
+	[fecha_entrega]				[DATETIME2](6),
+	[total]						[DECIMAL](18),
+	[importe_traslado]			[DECIMAL](18),
+	[importe_subida]			[DECIMAL](18)
+) ON [PRIMARY]
+GO*/
+
+/* Migracion Compra */
+
+INSERT INTO [MVM].[Compra] (nro_compra, fecha, total)
+SELECT DISTINCT Compra_Numero, Compra_Fecha, Compra_Total FROM gd_esquema.Maestra
+
+-- faltan las fks
+
+/*CREATE TABLE [MVM].[Compra] (
+	[nro_compra]				[DECIMAL](18) IDENTITY(1,1) NOT NULL,
+	[sucursal_codigo]			[BIGINT],
+	[proveedor_codigo]			[BIGINT],
+	[fecha]						[DATETIME2](6),
+	[detalle_compra_codigo]		[BIGINT],
+	[total]						[DECIMAL](18)
+) ON [PRIMARY]
+GO*/
+
+/* Migracion Detalle Compra */
+
+INSERT INTO [MVM].[DetalleCompra] (precio_unitario, cantidad, subtotal)
+SELECT DISTINCT Detalle_Compra_Precio, Detalle_Compra_Cantidad, Detalle_Compra_SubTotal FROM gd_esquema.Maestra
+
+-- código es autoincremental y no existe en la TM
+-- faltan las fks
+
+/*CREATE TABLE [MVM].[DetalleCompra] (
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[sucursal_codigo]			[BIGINT],
+	[material_codigo]			[BIGINT],
+	[precio_unitario]			[DECIMAL](18),
+	[cantidad]					[DECIMAL](18),
+	[subtotal]					[DECIMAL](18)
+) ON [PRIMARY]
+GO*/
