@@ -523,12 +523,9 @@ SELECT DISTINCT Proveedor_RazonSocial, Proveedor_Cuit, Direc.codigo, Medio.codig
 -- joins para direccion_codigo
 JOIN [MVM].[Provincia] Prov ON Proveedor_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc	ON Proveedor_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Proveedor_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND
-								Direc.localidad_codigo = Loc.codigo
+JOIN [MVM].[Direccion] Direc ON Proveedor_Direccion = Direc.direccion AND Direc.provincia_codigo = Prov.codigo AND Direc.localidad_codigo = Loc.codigo
 -- join para medio_contacto_codigo
-JOIN [MVM].[MedioDeContacto] Medio ON Proveedor_Mail = Medio.valor OR
-									  Proveedor_Telefono = Medio.valor -- PROBAR
+JOIN [MVM].[MedioDeContacto] Medio ON Proveedor_Mail = Medio.valor OR Proveedor_Telefono = Medio.valor -- PROBAR
 
 /* Migracion Factura */
 INSERT INTO [MVM].[Factura] (nro_factura, fecha_hora, total, sucursal_codigo, cliente_codigo, detalle_factura_codigo)
@@ -536,24 +533,13 @@ SELECT DISTINCT Factura_Numero, Factura_Fecha, Factura_Total FROM gd_esquema.Mae
 -- joins para sucursal_codigo
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
-							 Suc.direccion_codigo = Direc.codigo
+JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND Direc.provincia_codigo = Prov.codigo AND Direc.localidad_codigo = Loc.codigo
+JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND Suc.direccion_codigo = Direc.codigo
 -- join para cliente_codigo
-JOIN [MVM].[Cliente] Clie ON Cliente_Dni = Clie.dni AND
-							 Cliente_Nombre = Clie.nombre AND
-							 Cliente_Apellido = Clie.apellido
+JOIN [MVM].[Cliente] Clie ON Cliente_Dni = Clie.dni AND Cliente_Nombre = Clie.nombre AND Cliente_Apellido = Clie.apellido
 -- joins para detalle_factura_codigo
-JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND
-										Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND
-										Detalle_Pedido_Precio = DetPedido.precio_sillon AND
-										Detalle_Pedido_SubTotal = DetPedido.subtotal
-JOIN [MVM].[DetalleFactura] DetFact ON Detalle_Factura_Precio = DetFact.precio_unitario AND
-									   Detalle_Factura_Cantidad =  DetFact.cantidad AND
-									   Detalle_Factura_SubTotal =  DetFact.subtotal AND
-									   DetPedido.codigo = DetFact.detalle_pedido_codigo
+JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND Detalle_Pedido_Precio = DetPedido.precio_sillon AND Detalle_Pedido_SubTotal = DetPedido.subtotal
+JOIN [MVM].[DetalleFactura] DetFact ON Detalle_Factura_Precio = DetFact.precio_unitario AND Detalle_Factura_Cantidad =  DetFact.cantidad AND Detalle_Factura_SubTotal =  DetFact.subtotal AND DetPedido.codigo = DetFact.detalle_pedido_codigo
 
 /* Migracion Detalle Factura */
 INSERT INTO [MVM].[DetalleFactura] (precio_unitario, cantidad, subtotal, detalle_pedido_codigo)
@@ -561,15 +547,9 @@ SELECT DISTINCT Detalle_Factura_Precio, Detalle_Factura_Cantidad, Detalle_Factur
 -- joins para detalle_pedido_codigo
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
-							 Suc.direccion_codigo = Direc.codigo
-JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND
-										Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND
-										Detalle_Pedido_Precio = DetPedido.precio_sillon AND
-										Detalle_Pedido_SubTotal = DetPedido.subtotal
+JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND Direc.provincia_codigo = Prov.codigo AND Direc.localidad_codigo = Loc.codigo
+JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND Suc.direccion_codigo = Direc.codigo
+JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND Detalle_Pedido_Precio = DetPedido.precio_sillon AND Detalle_Pedido_SubTotal = DetPedido.subtotal
 
 /* Migracion Envio */
 INSERT INTO [MVM].[Envio] (nro_envio, fecha_programada, fecha_entrega, total, importe_traslado, importe_subida, nro_factura)
@@ -581,23 +561,13 @@ SELECT DISTINCT Compra_Numero, Compra_Fecha, Compra_Total FROM gd_esquema.Maestr
 -- joins para sucursal_codigo
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
-							 Suc.direccion_codigo = Direc.codigo
+JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND Direc.provincia_codigo = Prov.codigo AND Direc.localidad_codigo = Loc.codigo
+JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND Suc.direccion_codigo = Direc.codigo
 -- join para proveedor_codigo
-JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND
-								  Proveedor_RazonSocial = Proveed.razon_social
+JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND Proveedor_RazonSocial = Proveed.razon_social
 -- joins para detalle_compra_codigo
-JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND
-							 Material_Descripcion = Mat.descripcion AND
-							 Material_Precio = Mat.precio
-JOIN [MVM].[DetalleCompra] DetComp ON Detalle_Compra_Precio = DetComp.precio_unitario AND
-									  Detalle_Compra_Cantidad =  DetComp.cantidad AND
-									  Detalle_Compra_SubTotal = DetComp.subtotal AND
-									  Suc.codigo = DetComp.sucursal_codigo AND
-									  Mat.codigo = DetComp.material_codigo
+JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND Material_Descripcion = Mat.descripcion AND Material_Precio = Mat.precio
+JOIN [MVM].[DetalleCompra] DetComp ON Detalle_Compra_Precio = DetComp.precio_unitario AND Detalle_Compra_Cantidad =  DetComp.cantidad AND Detalle_Compra_SubTotal = DetComp.subtotal AND Suc.codigo = DetComp.sucursal_codigo AND Mat.codigo = DetComp.material_codigo
 
 /* Migracion Detalle Compra */
 INSERT INTO [MVM].[DetalleCompra] (precio_unitario, cantidad, subtotal, sucursal_codigo, material_codigo)
@@ -605,12 +575,7 @@ SELECT DISTINCT Detalle_Compra_Precio, Detalle_Compra_Cantidad, Detalle_Compra_S
 -- joins para sucursal_codigo
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
-							 Suc.direccion_codigo = Direc.codigo
+JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND Direc.provincia_codigo = Prov.codigo AND Direc.localidad_codigo = Loc.codigo
+JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND Suc.direccion_codigo = Direc.codigo
 -- join para material_codigo
-JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND
-							 Material_Descripcion = Mat.descripcion AND
-							 Material_Precio = Mat.precio
+JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND Material_Descripcion = Mat.descripcion AND Material_Precio = Mat.precio
