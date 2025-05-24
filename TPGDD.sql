@@ -327,6 +327,10 @@ ADD CONSTRAINT PK_Localidad PRIMARY KEY (codigo);
 ALTER TABLE [MVM].[MedioDeContacto]
 ADD CONSTRAINT PK_MedioDeContacto PRIMARY KEY (codigo);
 
+ALTER TABLE [MVM].[MedioDeContacto]
+ADD CONSTRAINT CHK_TipoMedio_ValoresValidos
+CHECK (tipo_medio IN ('MAIL', 'TELEFONO')); -- restriccion de los valores que puede tomar el tipo de medio de contacto
+
 -------------------- Creación de foreign keys ---------------------------
 
 /* Pedido */
