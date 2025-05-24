@@ -579,3 +579,75 @@ JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND Direc.p
 JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND Suc.direccion_codigo = Direc.codigo
 -- join para material_codigo
 JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND Material_Descripcion = Mat.descripcion AND Material_Precio = Mat.precio
+
+
+/* Migracion Provincia */
+INSERT INTO [MVM].[Provincia] (nombre)
+SELECT DISTINCT provincia
+FROM (
+    SELECT DISTINCT Sucursal_Provincia AS provincia
+    FROM gd_esquema.Maestra
+    WHERE Sucursal_Provincia IS NOT NULL
+
+    UNION
+
+    SELECT DISTINCT Cliente_Provincia AS provincia
+    FROM gd_esquema.Maestra
+    WHERE Cliente_Provincia IS NOT NULL
+
+    UNION
+
+    SELECT DISTINCT Proveedor_Provincia AS provincia
+    FROM gd_esquema.Maestra
+    WHERE Proveedor_Provincia IS NOT NULL
+) AS TodasLasProvincias;
+
+/* Migracion Localidad */
+INSERT INTO [MVM].[Localidad] (nombre)
+SELECT DISTINCT localidad
+FROM (
+	SELECT DISTINCT Sucursal_Localidad AS localidad
+	FROM gd_esquema.Maestra
+	WHERE Sucursal_Localidad IS NOT NULL
+
+	UNION
+
+	SELECT DISTINCT Proveedor_Localidad AS localidad
+	FROM gd_esquema.Maestra
+	WHERE Proveedor_Localidad IS NOT NULL
+
+	UNION
+
+	SELECT DISTINCT Cliente_Localidad AS localidad
+	FROM gd_esquema.Maestra
+	WHERE Cliente_Localidad IS NOT NULL
+) AS TodasLasLocalidades;
+
+/* Migracion Direccion */
+INSERT INTO [MVM].[Direccion] (direccion, provincia_codigo, localidad_codigo)
+SELECT DISTINCT
+    dir.direccion,
+    prov.codigo AS provincia_codigo,
+    loc.codigo AS localidad_codigo
+FROM (
+    -- Cliente
+    SELECT Cliente_Direccion AS direccion, Cliente_Provincia AS provincia, Cliente_Localidad AS localidad
+    FROM gd_esquema.Maestra
+    WHERE Cliente_Direccion IS NOT NULL
+
+    UNION
+
+    -- Proveedor
+    SELECT Proveedor_Direccion, Proveedor_Provincia, Proveedor_Localidad
+    FROM gd_esquema.Maestra
+    WHERE Proveedor_Direccion IS NOT NULL
+
+    UNION
+
+    -- Sucursal
+    SELECT Sucursal_Direccion, Sucursal_Provincia, Sucursal_Localidad
+    FROM gd_esquema.Maestra
+    WHERE Sucursal_Direccion IS NOT NULL
+) AS dir
+JOIN [MVM].[Provincia] prov ON dir.provincia = prov.nombre
+JOIN [MVM].[Localidad] loc ON dir.localidad = loc.nombre;
