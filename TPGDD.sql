@@ -655,3 +655,73 @@ FROM (
 ) AS dir
 JOIN [MVM].[Provincia] prov ON dir.provincia = prov.nombre
 JOIN [MVM].[Localidad] loc ON dir.localidad = loc.nombre;
+
+/* Migracion Medio de Contacto */
+-- del tipo MAIL
+INSERT INTO [MVM].[MedioDeContacto] (tipo_medio, valor)
+	SELECT DISTINCT 'MAIL', Cliente_Mail
+	FROM gd_esquema.Maestra
+	WHERE Cliente_Mail IS NOT NULL
+
+	UNION
+
+	SELECT DISTINCT 'MAIL', Proveedor_Mail
+	FROM gd_esquema.Maestra
+	WHERE Proveedor_Mail IS NOT NULL
+
+	UNION
+
+	SELECT DISTINCT 'MAIL', Sucursal_Mail
+	FROM gd_esquema.Maestra
+	WHERE Sucursal_mail IS NOT NULL;
+
+-- del tipo TELEFONO
+INSERT INTO [MVM].[MedioDeContacto] (tipo_medio, valor)
+	SELECT DISTINCT 'TELEFONO', Cliente_Telefono
+	FROM gd_esquema.Maestra
+	WHERE Cliente_Telefono IS NOT NULL
+
+	UNION
+
+	SELECT DISTINCT 'TELEFONO', Proveedor_Telefono
+	FROM gd_esquema.Maestra
+	WHERE Proveedor_Telefono IS NOT NULL
+
+	UNION
+
+	SELECT DISTINCT 'TELEFONO', Sucursal_Telefono
+	FROM gd_esquema.Maestra
+	WHERE Sucursal_telefono IS NOT NULL;
+
+/* Migracion Sucursal */
+INSERT INTO [MVM].[Sucursal] (nro_sucursal, direccion_codigo, medio_contacto_codigo)
+SELECT DISTINCT 
+	Sucursal_NroSucursal,		-- tabla maestra
+	Dir.codigo,
+	Medio.codigo
+FROM gd_esquema.Maestra
+-- Join para Direccion
+JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
+-- Join para MedioDeContacto
+JOIN [MVM].[MedioDeContacto] Medio ON Sucursal_Mail = Medio.valor OR Sucursal_Telefono = Medio.valor
+
+
+/* Migracion Cliente */
+INSERT INTO [MVM].[Cliente] (dni, nombre, apellido, fecha_nacimiento, direccion_codigo, medio_contacto_codigo)
+SELECT DISTINCT
+	Cliente_Dni,			-- tabla maestra
+	Cliente_Nombre,			-- tabla maestra
+	Cliente_Apellido,		-- tabla maestra
+	Cliente_FechaNacimiento,	-- tabla maestra
+	Dir.codigo,
+	Medio.codigo
+FROM gd_esquema.Maestra
+-- Join con Direccion: tengo que encontrar el registro de la tabla direccion (ya creada) que coincide con los datos del cliente que quiero migrar
+JOIN [MVM].[Provincia] Prov ON Cliente_Provincia = Prov.nombre
+JOIN [MVM].[Localidad] Loc ON Cliente_Localidad = Loc.nombre
+	-- Encuentro el campo direccion dentro de la tabla maestra pero tmb tengo que chequear que coincida provincia y localidad
+JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
+-- Join con MedioDeContacto
+JOIN [MVM].[MedioDeContacto] Medio ON Cliente_Mail = Medio.valor OR Cliente_Telefono = Medio.valor;
