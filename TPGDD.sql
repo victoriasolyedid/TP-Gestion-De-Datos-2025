@@ -777,99 +777,169 @@ WHERE NOT EXISTS (
 )
 
 /* Migracion Proveedor */
-INSERT INTO [MVM].[Proveedor] (razon_social, cuit, telefono, mail, direccion_codigo)
-SELECT DISTINCT Proveedor_RazonSocial, Proveedor_Cuit, Proveedor_Telefono, Proveedor_Mail, Direc.codigo FROM gd_esquema.Maestra 
--- joins para direccion_codigo
-JOIN [MVM].[Provincia] Prov ON Proveedor_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc	ON Proveedor_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Proveedor_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND
-								Direc.localidad_codigo = Loc.codigo
+GO -- SIN UN GO ACA ANTES SE ROMPE. Después se puede sacar
+CREATE PROCEDURE MigracionProveedor
+AS
+BEGIN
+	INSERT INTO [MVM].[Proveedor] (razon_social, cuit, telefono, mail, direccion_codigo)
+	SELECT DISTINCT 
+	Proveedor_RazonSocial, 
+	Proveedor_Cuit, 
+	Proveedor_Telefono, 
+	Proveedor_Mail, 
+	Direc.codigo 
+	FROM gd_esquema.Maestra 
+	-- joins para direccion_codigo --
+	JOIN [MVM].[Provincia] Prov ON Proveedor_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc	ON Proveedor_Localidad = Loc.nombre
+	JOIN [MVM].[Direccion] Direc ON Proveedor_Direccion = Direc.direccion AND
+									Direc.provincia_codigo = Prov.codigo AND
+									Direc.localidad_codigo = Loc.codigo
+END
+GO
 
 /* Migracion Factura */
-INSERT INTO [MVM].[Factura] (nro_factura, fecha_hora, total, sucursal_codigo, cliente_codigo)
-SELECT DISTINCT Factura_Numero, Factura_Fecha, Factura_Total, Suc.codigo, Clie.codigo FROM gd_esquema.Maestra
--- joins para sucursal_codigo
-JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
+CREATE PROCEDURE MigracionFactura
+AS
+BEGIN
+	INSERT INTO [MVM].[Factura] (nro_factura, fecha_hora, total, sucursal_codigo, cliente_codigo)
+	SELECT DISTINCT 
+	Factura_Numero, 
+	Factura_Fecha, 
+	Factura_Total, 
+	Suc.codigo, 
+	Clie.codigo 
+	FROM gd_esquema.Maestra
+	-- joins para sucursal_codigo --
+	JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+	JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
+									Direc.provincia_codigo = Prov.codigo AND
+									Direc.localidad_codigo = Loc.codigo
+	JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
 								Suc.direccion_codigo = Direc.codigo
--- join para cliente_codigo
-JOIN [MVM].[Cliente] Clie ON Cliente_Dni = Clie.dni AND
-							Cliente_Nombre = Clie.nombre AND
-							Cliente_Apellido = Clie.apellido
+	-- join para cliente_codigo --
+	JOIN [MVM].[Cliente] Clie ON Cliente_Dni = Clie.dni AND
+								Cliente_Nombre = Clie.nombre AND
+								Cliente_Apellido = Clie.apellido
+END
+GO
 
 /* Migracion Detalle Factura */
-INSERT INTO [MVM].[DetalleFactura] (precio_unitario, cantidad, subtotal, factura_codigo, detalle_pedido_codigo)
-SELECT DISTINCT Detalle_Factura_Precio, Detalle_Factura_Cantidad, Detalle_Factura_SubTotal, Fact.codigo, DetPedido.codigo FROM gd_esquema.Maestra
--- joins para factura_codigo
--- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
-JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND 
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
-							Suc.direccion_codigo = Direc.codigo
-JOIN [MVM].[Factura] Fact ON Factura_Numero = Fact.nro_factura AND
-							Suc.codigo = Fact.sucursal_codigo AND
-							Factura_Fecha = Fact.fecha_hora
--- joins para detalle_pedido_codigo
-JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND
-										Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND 
-										Detalle_Pedido_Precio = DetPedido.precio_sillon AND 
-										Detalle_Pedido_SubTotal = DetPedido.subtotal
+CREATE PROCEDURE MigracionDetalleFactura
+AS
+BEGIN
+	INSERT INTO [MVM].[DetalleFactura] (precio_unitario, cantidad, subtotal, factura_codigo, detalle_pedido_codigo)
+	SELECT DISTINCT 
+	Detalle_Factura_Precio, 
+	Detalle_Factura_Cantidad, 
+	Detalle_Factura_SubTotal, 
+	Fact.codigo, 
+	DetPedido.codigo 
+	FROM gd_esquema.Maestra
+	-- joins para factura_codigo --
+	-- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
+	JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+	JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
+									Direc.provincia_codigo = Prov.codigo AND 
+									Direc.localidad_codigo = Loc.codigo
+	JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
+								Suc.direccion_codigo = Direc.codigo
+	JOIN [MVM].[Factura] Fact ON Factura_Numero = Fact.nro_factura AND
+								Suc.codigo = Fact.sucursal_codigo AND
+								Factura_Fecha = Fact.fecha_hora
+	-- joins para detalle_pedido_codigo --
+	JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND
+											Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND 
+											Detalle_Pedido_Precio = DetPedido.precio_sillon AND 
+											Detalle_Pedido_SubTotal = DetPedido.subtotal
+END
+GO
 
 /* Migracion Envio */
-INSERT INTO [MVM].[Envio] (nro_envio, fecha_programada, fecha_entrega, total, importe_traslado, importe_subida, factura_codigo)
-SELECT DISTINCT Envio_Numero, Factura_Numero, Envio_Fecha_Programada, Envio_Fecha, Envio_Total, Envio_ImporteTraslado, Envio_importeSubida, Fact.codigo FROM gd_esquema.Maestra
--- joins para factura_codigo
--- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
-JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND 
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
-							Suc.direccion_codigo = Direc.codigo
-JOIN [MVM].[Factura] Fact ON Factura_Numero = Fact.nro_factura AND
-							Suc.codigo = Fact.sucursal_codigo AND
-							Factura_Fecha = Fact.fecha_hora
+CREATE PROCEDURE MigracionEnvio
+AS
+BEGIN
+	INSERT INTO [MVM].[Envio] (nro_envio, fecha_programada, fecha_entrega, total, importe_traslado, importe_subida, factura_codigo)
+	SELECT DISTINCT 
+	Envio_Numero, 
+	Factura_Numero, 
+	Envio_Fecha_Programada, 
+	Envio_Fecha, 
+	Envio_Total, 
+	Envio_ImporteTraslado, 
+	Envio_importeSubida, 
+	Fact.codigo 
+	FROM gd_esquema.Maestra
+	-- joins para factura_codigo --
+	-- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
+	JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+	JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
+									Direc.provincia_codigo = Prov.codigo AND 
+									Direc.localidad_codigo = Loc.codigo
+	JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
+								Suc.direccion_codigo = Direc.codigo
+	JOIN [MVM].[Factura] Fact ON Factura_Numero = Fact.nro_factura AND
+								Suc.codigo = Fact.sucursal_codigo AND
+								Factura_Fecha = Fact.fecha_hora
+END
+GO
 
 /* Migracion Compra */
-INSERT INTO [MVM].[Compra] (nro_compra, fecha, total, sucursal_codigo, proveedor_codigo)
-SELECT DISTINCT Compra_Numero, Compra_Fecha, Compra_Total, Suc.codigo, Proveed.codigo FROM gd_esquema.Maestra
--- joins para sucursal_codigo
-JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND 
-								Direc.provincia_codigo = Prov.codigo AND 
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
-							Suc.direccion_codigo = Direc.codigo
--- join para proveedor_codigo
-JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND 
-								Proveedor_RazonSocial = Proveed.razon_social
+CREATE PROCEDURE MigracionCompra
+AS
+BEGIN
+	INSERT INTO [MVM].[Compra] (nro_compra, fecha, total, sucursal_codigo, proveedor_codigo)
+	SELECT DISTINCT 
+	Compra_Numero, 
+	Compra_Fecha, 
+	Compra_Total, 
+	Suc.codigo, 
+	Proveed.codigo 
+	FROM gd_esquema.Maestra
+	-- joins para sucursal_codigo --
+	JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+	JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND 
+									Direc.provincia_codigo = Prov.codigo AND 
+									Direc.localidad_codigo = Loc.codigo
+	JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
+								Suc.direccion_codigo = Direc.codigo
+	-- join para proveedor_codigo --
+	JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND 
+									Proveedor_RazonSocial = Proveed.razon_social
+END
+GO
 
 /* Migracion Detalle Compra */
-INSERT INTO [MVM].[DetalleCompra] (precio_unitario, cantidad, subtotal, compra_codigo, material_codigo)
-SELECT DISTINCT Detalle_Compra_Precio, Detalle_Compra_Cantidad, Detalle_Compra_SubTotal, Comp.codigo, Mat.codigo FROM gd_esquema.Maestra
--- joins para compra_codigo
--- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
-JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
-								Direc.provincia_codigo = Prov.codigo AND 
-								Direc.localidad_codigo = Loc.codigo
-JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
-							Suc.direccion_codigo = Direc.codigo
-JOIN [MVM].[Compra] Comp ON Compra_Numero = Comp.nro_compra AND
-							Suc.codigo = Comp.sucursal_codigo AND
-							Compra_Fecha = Comp.fecha
--- join para material_codigo
-JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND
-							Material_Descripcion = Mat.descripcion AND 
-							Material_Precio = Mat.precio
+CREATE PROCEDURE MigracionDetalleCompra
+AS
+BEGIN
+	INSERT INTO [MVM].[DetalleCompra] (precio_unitario, cantidad, subtotal, compra_codigo, material_codigo)
+	SELECT DISTINCT 
+	Detalle_Compra_Precio, 
+	Detalle_Compra_Cantidad, 
+	Detalle_Compra_SubTotal, 
+	Comp.codigo, 
+	Mat.codigo 
+	FROM gd_esquema.Maestra
+	-- joins para compra_codigo --
+	-- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
+	JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+	JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
+									Direc.provincia_codigo = Prov.codigo AND 
+									Direc.localidad_codigo = Loc.codigo
+	JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
+								Suc.direccion_codigo = Direc.codigo
+	JOIN [MVM].[Compra] Comp ON Compra_Numero = Comp.nro_compra AND
+								Suc.codigo = Comp.sucursal_codigo AND
+								Compra_Fecha = Comp.fecha
+	-- join para material_codigo --
+	JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND
+								Material_Descripcion = Mat.descripcion AND 
+								Material_Precio = Mat.precio
+END
+GO
