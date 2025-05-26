@@ -13,13 +13,6 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 -------------------- Creación de las tablas ---------------------------
----- ORDEN GENERAL USADO ---- (Martu)
--- PROVINCIA
--- LOCALIDAD
--- DIRECCION
--- MEDIO DE CONTACTO
--- SUCURSAL
--- CLIENTE
 
 BEGIN TRANSACTION;
 
@@ -39,70 +32,64 @@ GO
 
 /* Direccion */
 CREATE TABLE [MVM].[Direccion] (
-	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL, -- PK
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, -- PK
 	[provincia_codigo]			[BIGINT],						 -- FK
 	[localidad_codigo]			[BIGINT],						 -- FK
-	[direccion]					[NVARCHAR](255),
-) ON [PRIMARY]
-GO
-
-/* Medio de Contacto */
-CREATE TABLE [MVM].[MedioDeContacto] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[tipo_medio]			[VARCHAR](10),					 
-	[valor]					[NVARCHAR](255)				
+	[direccion]				[NVARCHAR](255),
 ) ON [PRIMARY]
 GO
 
 /* Sucursal */
 CREATE TABLE [MVM].[Sucursal] (
-	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[nro_sucursal]				[BIGINT],
 	[direccion_codigo]			[BIGINT],						
-	[medio_contacto_codigo]		[BIGINT]						
+	[mail]					[NVARCHAR](255),
+	[telefono]				[NVARCHAR](255)
 ) ON [PRIMARY]
 GO
 
 /* Cliente */
 CREATE TABLE [MVM].[Cliente] (
-	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[dni]						[BIGINT],
-	[nombre]					[NVARCHAR](255),
-	[apellido]					[NVARCHAR](255),
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[dni]					[BIGINT],
+	[nombre]				[NVARCHAR](255),
+	[apellido]				[NVARCHAR](255),
 	[fecha_nacimiento]			[DATETIME2](6),
 	[direccion_codigo]			[BIGINT],
-	[medio_contacto_codigo]		[BIGINT]
+	[mail]					[NVARCHAR](255),
+	[telefono]				[NVARCHAR](255)
 ) ON [PRIMARY]
 GO
 
 /* Pedido */
 CREATE TABLE [MVM].[Pedido] (
-	[nro_pedido]			[BIGINT] IDENTITY(1,1)	NOT NULL,
-	[sucursal_codigo]		[BIGINT],
-	[cliente_codigo]		[BIGINT],
+	[nro_pedido]				[BIGINT] IDENTITY(1,1)	NOT NULL,
+	[sucursal_codigo]			[BIGINT],
+	[cliente_codigo]			[BIGINT],
 	[fecha]					[DATETIME2](6),
-	[detalle_pedido_codigo] [BIGINT],
+	[detalle_pedido_codigo]	 		[BIGINT],
 	[total]					[DECIMAL](18,2),
-	[estado_actual_codigo]  [BIGINT]
+	[estado_actual_codigo]  		[BIGINT]
 ) ON [PRIMARY]
 GO
 
 /* Detalle Pedido */
 CREATE TABLE [MVM].[DetallePedido] (
 	[codigo]				[BIGINT] IDENTITY(1,1)	NOT NULL,
-	[sucursal_codigo]		[BIGINT],
-	[cantidad_sillones]		[BIGINT],
-	[precio_sillon]			[DECIMAL](18,2),
+	[sucursal_codigo]			[BIGINT],
+	[cantidad_sillones]			[BIGINT],
+	[precio_sillon]				[DECIMAL](18,2),
 	[subtotal]				[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 
 /* Estado */
 CREATE TABLE [MVM].[Estado] (
-	[codigo]	 [BIGINT] IDENTITY(1,1)	NOT NULL,
-	[tipo]		 [NVARCHAR](255),
-	[fecha]		 [DATETIME2](6),
-	[motivo]	 [NVARCHAR](255),
+	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
+	[tipo]		 			[NVARCHAR](255),
+	[fecha]					[DATETIME2](6),
+	[motivo]			 	[NVARCHAR](255),
 	[nro_pedido] [BIGINT]
 ) ON [PRIMARY]
 GO
@@ -110,20 +97,20 @@ GO
 
 /* Pedido Cancelacion */
 CREATE TABLE [MVM].[PedidoCancelacion] (
-	[codigo]	 [BIGINT] IDENTITY(1,1)	NOT NULL,
-	[fecha]		 [DATETIME2](6),
-	[motivo]	 [NVARCHAR](255),
+	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
+	[fecha]		 			[DATETIME2](6),
+	[motivo]	 			[NVARCHAR](255),
 	[nro_pedido] [BIGINT]
 ) ON [PRIMARY]
 GO
 
 /* Medida */
 CREATE TABLE [MVM].[Medida] (
-	[codigo]		  [BIGINT] IDENTITY(1,1)	NOT NULL,
-	[alto]			  [DECIMAL](18,2),
-	[ancho]			  [DECIMAL](18,2),
-	[profundidad]	  [DECIMAL](18,2),
-	[precio]		  [DECIMAL](18,2)
+	[codigo]		  		[BIGINT] IDENTITY(1,1)	NOT NULL,
+	[alto]			  		[DECIMAL](18,2),
+	[ancho]			  		[DECIMAL](18,2),
+	[profundidad]	  			[DECIMAL](18,2),
+	[precio]		  		[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 
@@ -191,7 +178,8 @@ CREATE TABLE [MVM].[Proveedor] (
 	[direccion_codigo]			[BIGINT],
 	[razon_social]				[NVARCHAR](255),
 	[cuit]						[NVARCHAR](255),
-	[medio_contacto_codigo]		[BIGINT]
+	[mail]						[NVARCHAR](255),
+	[telefono]					[NVARCHAR](255)
 ) ON [PRIMARY]
 GO
 
@@ -337,10 +325,6 @@ ALTER TABLE [MVM].[DetalleCompra]
 ADD CONSTRAINT PK_DetalleCompra PRIMARY KEY (codigo, sucursal_codigo);
 
 -------------------- Creación de checks --------------------------------
-
-ALTER TABLE [MVM].[MedioDeContacto]
-ADD CONSTRAINT CHK_TipoMedio_ValoresValidos
-CHECK (tipo_medio IN ('MAIL', 'TELEFONO')); -- restriccion de los valores que puede tomar el tipo de medio de contacto
 
 ALTER TABLE [MVM].[Estado]
 ADD CONSTRAINT CHK_Estado_Tipo_ValoresValidos
@@ -505,144 +489,105 @@ ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
 
 /* Migracion Provincia */
 INSERT INTO [MVM].[Provincia] (nombre)
-SELECT DISTINCT provincia
-FROM (
-    SELECT DISTINCT Sucursal_Provincia AS provincia
-    FROM gd_esquema.Maestra
-    WHERE Sucursal_Provincia IS NOT NULL
+SELECT DISTINCT Sucursal_Provincia AS nombre
+FROM gd_esquema.Maestra
+WHERE Sucursal_Provincia IS NOT NULL
 
-    UNION
+UNION
 
-    SELECT DISTINCT Cliente_Provincia AS provincia
-    FROM gd_esquema.Maestra
-    WHERE Cliente_Provincia IS NOT NULL
+SELECT DISTINCT Cliente_Provincia AS nombre
+FROM gd_esquema.Maestra
+WHERE Cliente_Provincia IS NOT NULL
 
-    UNION
+UNION
 
-    SELECT DISTINCT Proveedor_Provincia AS provincia
-    FROM gd_esquema.Maestra
-    WHERE Proveedor_Provincia IS NOT NULL
-) AS TodasLasProvincias;
+SELECT DISTINCT Proveedor_Provincia AS nombre
+FROM gd_esquema.Maestra
+WHERE Proveedor_Provincia IS NOT NULL;
 
 /* Migracion Localidad */
 INSERT INTO [MVM].[Localidad] (nombre)
-SELECT DISTINCT localidad
-FROM (
-	SELECT DISTINCT Sucursal_Localidad AS localidad
-	FROM gd_esquema.Maestra
-	WHERE Sucursal_Localidad IS NOT NULL
+SELECT DISTINCT Sucursal_Localidad AS nombre
+FROM gd_esquema.Maestra
+WHERE Sucursal_Localidad IS NOT NULL
 
-	UNION
+UNION
 
-	SELECT DISTINCT Proveedor_Localidad AS localidad
-	FROM gd_esquema.Maestra
-	WHERE Proveedor_Localidad IS NOT NULL
+SELECT DISTINCT Proveedor_Localidad AS nombre
+FROM gd_esquema.Maestra
+WHERE Proveedor_Localidad IS NOT NULL
 
-	UNION
+UNION
 
-	SELECT DISTINCT Cliente_Localidad AS localidad
-	FROM gd_esquema.Maestra
-	WHERE Cliente_Localidad IS NOT NULL
-) AS TodasLasLocalidades;
+SELECT DISTINCT Cliente_Localidad AS nombre
+FROM gd_esquema.Maestra
+WHERE Cliente_Localidad IS NOT NULL;
+
 
 /* Migracion Direccion */
 INSERT INTO [MVM].[Direccion] (direccion, provincia_codigo, localidad_codigo)
-SELECT DISTINCT
-    dir.direccion,
+SELECT DISTINCT 
+    Cliente_Direccion AS direccion,
     prov.codigo AS provincia_codigo,
     loc.codigo AS localidad_codigo
-FROM (
-    -- Cliente
-    SELECT Cliente_Direccion AS direccion, Cliente_Provincia AS provincia, Cliente_Localidad AS localidad
-    FROM gd_esquema.Maestra
-    WHERE Cliente_Direccion IS NOT NULL
+FROM gd_esquema.Maestra 
+JOIN [MVM].[Provincia] prov ON Cliente_Provincia = prov.nombre
+JOIN [MVM].[Localidad] loc ON Cliente_Localidad = loc.nombre
+WHERE Cliente_Direccion IS NOT NULL
 
-    UNION
+UNION
 
-    -- Proveedor
-    SELECT Proveedor_Direccion, Proveedor_Provincia, Proveedor_Localidad
-    FROM gd_esquema.Maestra
-    WHERE Proveedor_Direccion IS NOT NULL
+SELECT DISTINCT 
+    Proveedor_Direccion,
+    prov.codigo,
+    loc.codigo
+FROM gd_esquema.Maestra 
+JOIN [MVM].[Provincia] prov ON Proveedor_Provincia = prov.nombre
+JOIN [MVM].[Localidad] loc ON Proveedor_Localidad = loc.nombre
+WHERE Proveedor_Direccion IS NOT NULL
 
-    UNION
+UNION
 
-    -- Sucursal
-    SELECT Sucursal_Direccion, Sucursal_Provincia, Sucursal_Localidad
-    FROM gd_esquema.Maestra
-    WHERE Sucursal_Direccion IS NOT NULL
-) AS dir
-JOIN [MVM].[Provincia] prov ON dir.provincia = prov.nombre
-JOIN [MVM].[Localidad] loc ON dir.localidad = loc.nombre;
+SELECT DISTINCT 
+    Sucursal_Direccion,
+    prov.codigo,
+    loc.codigo
+FROM gd_esquema.Maestra 
+JOIN [MVM].[Provincia] prov ON Sucursal_Provincia = prov.nombre
+JOIN [MVM].[Localidad] loc ON Sucursal_Localidad = loc.nombre
+WHERE Sucursal_Direccion IS NOT NULL;
 
-/* Migracion Medio de Contacto */
--- del tipo MAIL
-INSERT INTO [MVM].[MedioDeContacto] (tipo_medio, valor)
-	SELECT DISTINCT 'MAIL', Cliente_Mail
-	FROM gd_esquema.Maestra
-	WHERE Cliente_Mail IS NOT NULL
-
-	UNION
-
-	SELECT DISTINCT 'MAIL', Proveedor_Mail
-	FROM gd_esquema.Maestra
-	WHERE Proveedor_Mail IS NOT NULL
-
-	UNION
-
-	SELECT DISTINCT 'MAIL', Sucursal_Mail
-	FROM gd_esquema.Maestra
-	WHERE Sucursal_mail IS NOT NULL;
-
--- del tipo TELEFONO
-INSERT INTO [MVM].[MedioDeContacto] (tipo_medio, valor)
-	SELECT DISTINCT 'TELEFONO', Cliente_Telefono
-	FROM gd_esquema.Maestra
-	WHERE Cliente_Telefono IS NOT NULL
-
-	UNION
-
-	SELECT DISTINCT 'TELEFONO', Proveedor_Telefono
-	FROM gd_esquema.Maestra
-	WHERE Proveedor_Telefono IS NOT NULL
-
-	UNION
-
-	SELECT DISTINCT 'TELEFONO', Sucursal_Telefono
-	FROM gd_esquema.Maestra
-	WHERE Sucursal_telefono IS NOT NULL;
 
 /* Migracion Sucursal */
-INSERT INTO [MVM].[Sucursal] (nro_sucursal, direccion_codigo, medio_contacto_codigo)
+INSERT INTO [MVM].[Sucursal] (nro_sucursal, direccion_codigo, mail, telefono)
 SELECT DISTINCT 
-	Sucursal_NroSucursal,		-- tabla maestra
-	Dir.codigo,
-	Medio.codigo
+	Sucursal_NroSucursal,      
+	Dir.codigo,                 
+	Sucursal_Mail,               
+	Sucursal_Telefono
 FROM gd_esquema.Maestra
 -- Join para Direccion
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
--- Join para MedioDeContacto
-JOIN [MVM].[MedioDeContacto] Medio ON Sucursal_Mail = Medio.valor OR Sucursal_Telefono = Medio.valor
+JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo;
 
 
 /* Migracion Cliente */
-INSERT INTO [MVM].[Cliente] (dni, nombre, apellido, fecha_nacimiento, direccion_codigo, medio_contacto_codigo)
+INSERT INTO [MVM].[Cliente] (dni, nombre, apellido, fecha_nacimiento, direccion_codigo, mail, telefono)
 SELECT DISTINCT
-	Cliente_Dni,				-- tabla maestra
-	Cliente_Nombre,				-- tabla maestra
-	Cliente_Apellido,			-- tabla maestra
-	Cliente_FechaNacimiento,	-- tabla maestra
+	Cliente_Dni,		
+	Cliente_Nombre,				
+	Cliente_Apellido,		
+	Cliente_FechaNacimiento,	
 	Dir.codigo,
-	Medio.codigo
+	Cliente_Mail,               
+	Cliente_Telefono
 FROM gd_esquema.Maestra
 -- Join con Direccion: tengo que encontrar el registro de la tabla direccion (ya creada) que coincide con los datos del cliente que quiero migrar
 JOIN [MVM].[Provincia] Prov ON Cliente_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Cliente_Localidad = Loc.nombre
-	-- Encuentro el campo direccion dentro de la tabla maestra pero tmb tengo que chequear que coincida provincia y localidad
+-- Encuentro el campo direccion dentro de la tabla maestra pero tmb tengo que chequear que coincida provincia y localidad
 JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
--- Join con MedioDeContacto
-JOIN [MVM].[MedioDeContacto] Medio ON Cliente_Mail = Medio.valor OR Cliente_Telefono = Medio.valor;
 
 
 /* Migracion Detalle Pedido */
@@ -842,18 +787,14 @@ WHERE NOT EXISTS (
 )
 
 /* Migracion Proveedor */
-/* PROBLEMA: puede haber más de un código en medio de contacto (ej: tiene mail y teléfono), cómo guardamos ambos? */
-INSERT INTO [MVM].[Proveedor] (razon_social, cuit, direccion_codigo, medio_contacto_codigo)
-SELECT DISTINCT Proveedor_RazonSocial, Proveedor_Cuit, Direc.codigo, Medio.codigo FROM gd_esquema.Maestra 
+INSERT INTO [MVM].[Proveedor] (razon_social, cuit, direccion_codigo, mail, telefono)
+SELECT DISTINCT Proveedor_RazonSocial, Proveedor_Cuit, Direc.codigo, Proveedor_Mail, Proveedor_Telefono FROM gd_esquema.Maestra 
 -- joins para direccion_codigo
 JOIN [MVM].[Provincia] Prov ON Proveedor_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc	ON Proveedor_Localidad = Loc.nombre
 JOIN [MVM].[Direccion] Direc ON Proveedor_Direccion = Direc.direccion AND
 								Direc.provincia_codigo = Prov.codigo AND
 								Direc.localidad_codigo = Loc.codigo
--- join para medio_contacto_codigo
-JOIN [MVM].[MedioDeContacto] Medio ON Proveedor_Mail = Medio.valor OR
-									Proveedor_Telefono = Medio.valor 
 
 /* Migracion Factura */
 INSERT INTO [MVM].[Factura] (nro_factura, fecha_hora, total, sucursal_codigo, cliente_codigo, detalle_factura_codigo)
