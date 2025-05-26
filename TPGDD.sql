@@ -94,7 +94,6 @@ CREATE TABLE [MVM].[Estado] (
 ) ON [PRIMARY]
 GO
 
-
 /* Pedido Cancelacion */
 CREATE TABLE [MVM].[PedidoCancelacion] (
 	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
@@ -155,7 +154,6 @@ CREATE TABLE [MVM].[Tela] (
 ) ON [PRIMARY]
 GO
 
-
 /* Sillon */
 CREATE TABLE [MVM].[Sillon] (
 	[codigo]				[BIGINT] IDENTITY(1,1)	NOT NULL,
@@ -164,7 +162,6 @@ CREATE TABLE [MVM].[Sillon] (
 	[detalle_pedido_codigo] [BIGINT]
 ) ON [PRIMARY]
 GO
-
 
 /* Sillon_Material */
 CREATE TABLE [MVM].[Sillon_Material](
@@ -178,18 +175,18 @@ CREATE TABLE [MVM].[Proveedor] (
 	[direccion_codigo]			[BIGINT],
 	[razon_social]				[NVARCHAR](255),
 	[cuit]						[NVARCHAR](255),
-	[mail]						[NVARCHAR](255),
-	[telefono]					[NVARCHAR](255)
+	[telefono]					[NVARCHAR](255),
+	[mail]						[NVARCHAR](255)
 ) ON [PRIMARY]
 GO
 
 /* Factura */
 CREATE TABLE [MVM].[Factura] (
-	[nro_factura]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[nro_factura]				[BIGINT],
 	[sucursal_codigo]			[BIGINT],
 	[cliente_codigo]			[BIGINT],
 	[fecha_hora]				[DATETIME2](6),
-	[detalle_factura_codigo]	[BIGINT],
 	[total]						[DECIMAL](18)
 ) ON [PRIMARY]
 GO
@@ -197,6 +194,7 @@ GO
 /* Detalle Factura */
 CREATE TABLE [MVM].[DetalleFactura] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[factura_codigo]			[BIGINT],
 	[detalle_pedido_codigo]		[BIGINT],
 	[precio_unitario]			[DECIMAL](18),
 	[cantidad]					[DECIMAL](18),
@@ -206,8 +204,9 @@ GO
 
 /* Envio */
 CREATE TABLE [MVM].[Envio] (
-	[nro_envio]					[DECIMAL](18) IDENTITY(1,1) NOT NULL,
-	[nro_factura]				[BIGINT],
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[nro_envio]					[DECIMAL](18),
+	[factura_codigo]			[BIGINT],
 	[fecha_programada]			[DATETIME2](6),
 	[fecha_entrega]				[DATETIME2](6),
 	[total]						[DECIMAL](18),
@@ -218,11 +217,11 @@ GO
 
 /* Compra */
 CREATE TABLE [MVM].[Compra] (
-	[nro_compra]				[DECIMAL](18) IDENTITY(1,1) NOT NULL,
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[nro_compra]				[DECIMAL](18),
 	[sucursal_codigo]			[BIGINT],
 	[proveedor_codigo]			[BIGINT],
 	[fecha]						[DATETIME2](6),
-	[detalle_compra_codigo]		[BIGINT],
 	[total]						[DECIMAL](18)
 ) ON [PRIMARY]
 GO
@@ -230,7 +229,7 @@ GO
 /* Detalle Compra */
 CREATE TABLE [MVM].[DetalleCompra] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[sucursal_codigo]			[BIGINT],
+	[compra_codigo]				[BIGINT],
 	[material_codigo]			[BIGINT],
 	[precio_unitario]			[DECIMAL](18),
 	[cantidad]					[DECIMAL](18),
@@ -306,7 +305,7 @@ ADD CONSTRAINT PK_Proveedor PRIMARY KEY (codigo);
 
 /* Factura */
 ALTER TABLE [MVM].[Factura]
-ADD CONSTRAINT PK_Factura PRIMARY KEY (nro_factura, sucursal_codigo);
+ADD CONSTRAINT PK_Factura PRIMARY KEY (codigo);
 
 /* Detalle Factura */
 ALTER TABLE [MVM].[DetalleFactura]
@@ -314,15 +313,15 @@ ADD CONSTRAINT PK_DetalleFactura PRIMARY KEY (codigo);
 
 /* Envio */
 ALTER TABLE [MVM].[Envio]
-ADD CONSTRAINT PK_Envio PRIMARY KEY (nro_envio);
+ADD CONSTRAINT PK_Envio PRIMARY KEY (codigo);
 
 /* Compra */
 ALTER TABLE [MVM].[Compra]
-ADD CONSTRAINT PK_Compra PRIMARY KEY (nro_compra, sucursal_codigo);
+ADD CONSTRAINT PK_Compra PRIMARY KEY (codigo);
 
 /* Detalle Compra */
 ALTER TABLE [MVM].[DetalleCompra]
-ADD CONSTRAINT PK_DetalleCompra PRIMARY KEY (codigo, sucursal_codigo);
+ADD CONSTRAINT PK_DetalleCompra PRIMARY KEY (codigo);
 
 -------------------- Creación de checks --------------------------------
 
@@ -419,10 +418,6 @@ ALTER TABLE [MVM].[Proveedor]
 ADD CONSTRAINT FK_Proveedor_Direccion
 FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[Direccion](codigo);
 
-ALTER TABLE [MVM].[Proveedor]
-ADD CONSTRAINT FK_Proveedor_Medio
-FOREIGN KEY (medio_contacto_codigo) REFERENCES [MVM].[MedioDeContacto](codigo);
-
 /* Factura */
 ALTER TABLE [MVM].[Factura]
 ADD CONSTRAINT FK_Factura_Sucursal
@@ -432,11 +427,11 @@ ALTER TABLE [MVM].[Factura]
 ADD CONSTRAINT FK_Factura_Cliente
 FOREIGN KEY (cliente_codigo) REFERENCES [MVM].[Cliente](codigo);
 
-ALTER TABLE [MVM].[Factura]
-ADD CONSTRAINT FK_Factura_Detalle
-FOREIGN KEY (detalle_factura_codigo) REFERENCES [MVM].[DetalleFactura](codigo);
-
 /* Detalle Factura */
+ALTER TABLE [MVM].[DetalleFactura]
+ADD CONSTRAINT FK_DetalleFactura_Factura
+FOREIGN KEY (factura_codigo) REFERENCES [MVM].[Factura](codigo);
+
 ALTER TABLE [MVM].[DetalleFactura]
 ADD CONSTRAINT FK_DetalleFactura_DetallePedido
 FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
@@ -444,7 +439,7 @@ FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
 /* Envio */
 ALTER TABLE [MVM].[Envio]
 ADD CONSTRAINT FK_Envio_Factura
-FOREIGN KEY (nro_factura) REFERENCES [MVM].[Factura](nro_factura);
+FOREIGN KEY (factura_codigo) REFERENCES [MVM].[Factura](codigo);
 
 /* Compra */
 ALTER TABLE [MVM].[Compra]
@@ -455,14 +450,10 @@ ALTER TABLE [MVM].[Compra]
 ADD CONSTRAINT FK_Compra_Provvedor
 FOREIGN KEY (proveedor_codigo) REFERENCES [MVM].[Proveedor](codigo);
 
-ALTER TABLE [MVM].[Compra]
-ADD CONSTRAINT FK_Compra_Detale
-FOREIGN KEY (detalle_compra_codigo) REFERENCES [MVM].[DetalleCompra](codigo);
-
 /* Detalle Compra */
 ALTER TABLE [MVM].[DetalleCompra]
-ADD CONSTRAINT FK_DetalleCompra_Sucursal
-FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
+ADD CONSTRAINT FK_DetalleCompra_Compra
+FOREIGN KEY (compra_codigo) REFERENCES [MVM].[Compra](codigo);
 
 ALTER TABLE [MVM].[DetalleCompra]
 ADD CONSTRAINT FK_DetalleCompra_Material
@@ -688,7 +679,6 @@ WHERE NOT EXISTS (
       AND Mat.precio = M.Material_Precio
 ) 
 
-
 /* Relleno */ 
 INSERT INTO [MVM].[Relleno] (codigo, densidad)
 SELECT Mat.codigo, M.Relleno_Densidad FROM gd_esquema.Maestra M
@@ -787,8 +777,8 @@ WHERE NOT EXISTS (
 )
 
 /* Migracion Proveedor */
-INSERT INTO [MVM].[Proveedor] (razon_social, cuit, direccion_codigo, mail, telefono)
-SELECT DISTINCT Proveedor_RazonSocial, Proveedor_Cuit, Direc.codigo, Proveedor_Mail, Proveedor_Telefono FROM gd_esquema.Maestra 
+INSERT INTO [MVM].[Proveedor] (razon_social, cuit, telefono, mail, direccion_codigo)
+SELECT DISTINCT Proveedor_RazonSocial, Proveedor_Cuit, Proveedor_Telefono, Proveedor_Mail, Direc.codigo FROM gd_esquema.Maestra 
 -- joins para direccion_codigo
 JOIN [MVM].[Provincia] Prov ON Proveedor_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc	ON Proveedor_Localidad = Loc.nombre
@@ -797,8 +787,8 @@ JOIN [MVM].[Direccion] Direc ON Proveedor_Direccion = Direc.direccion AND
 								Direc.localidad_codigo = Loc.codigo
 
 /* Migracion Factura */
-INSERT INTO [MVM].[Factura] (nro_factura, fecha_hora, total, sucursal_codigo, cliente_codigo, detalle_factura_codigo)
-SELECT DISTINCT Factura_Numero, Factura_Fecha, Factura_Total FROM gd_esquema.Maestra
+INSERT INTO [MVM].[Factura] (nro_factura, fecha_hora, total, sucursal_codigo, cliente_codigo)
+SELECT DISTINCT Factura_Numero, Factura_Fecha, Factura_Total, Suc.codigo, Clie.codigo FROM gd_esquema.Maestra
 -- joins para sucursal_codigo
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
@@ -811,20 +801,12 @@ JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
 JOIN [MVM].[Cliente] Clie ON Cliente_Dni = Clie.dni AND
 							Cliente_Nombre = Clie.nombre AND
 							Cliente_Apellido = Clie.apellido
--- joins para detalle_factura_codigo
-JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND 
-										Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND
-										Detalle_Pedido_Precio = DetPedido.precio_sillon AND
-										Detalle_Pedido_SubTotal = DetPedido.subtotal
-JOIN [MVM].[DetalleFactura] DetFact ON Detalle_Factura_Precio = DetFact.precio_unitario AND
-										Detalle_Factura_Cantidad =  DetFact.cantidad AND 
-										Detalle_Factura_SubTotal =  DetFact.subtotal AND 
-										DetPedido.codigo = DetFact.detalle_pedido_codigo
 
 /* Migracion Detalle Factura */
-INSERT INTO [MVM].[DetalleFactura] (precio_unitario, cantidad, subtotal, detalle_pedido_codigo)
-SELECT DISTINCT Detalle_Factura_Precio, Detalle_Factura_Cantidad, Detalle_Factura_SubTotal FROM gd_esquema.Maestra
--- joins para detalle_pedido_codigo
+INSERT INTO [MVM].[DetalleFactura] (precio_unitario, cantidad, subtotal, factura_codigo, detalle_pedido_codigo)
+SELECT DISTINCT Detalle_Factura_Precio, Detalle_Factura_Cantidad, Detalle_Factura_SubTotal, Fact.codigo, DetPedido.codigo FROM gd_esquema.Maestra
+-- joins para factura_codigo
+-- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
 JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
@@ -832,18 +814,34 @@ JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
 								Direc.localidad_codigo = Loc.codigo
 JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
 							Suc.direccion_codigo = Direc.codigo
+JOIN [MVM].[Factura] Fact ON Factura_Numero = Fact.nro_factura AND
+							Suc.codigo = Fact.sucursal_codigo AND
+							Factura_Fecha = Fact.fecha_hora
+-- joins para detalle_pedido_codigo
 JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND
 										Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND 
 										Detalle_Pedido_Precio = DetPedido.precio_sillon AND 
 										Detalle_Pedido_SubTotal = DetPedido.subtotal
 
 /* Migracion Envio */
-INSERT INTO [MVM].[Envio] (nro_envio, nro_factura, fecha_programada, fecha_entrega, total, importe_traslado, importe_subida)
-SELECT DISTINCT Envio_Numero, Factura_Numero, Envio_Fecha_Programada, Envio_Fecha, Envio_Total, Envio_ImporteTraslado, Envio_importeSubida FROM gd_esquema.Maestra
+INSERT INTO [MVM].[Envio] (nro_envio, fecha_programada, fecha_entrega, total, importe_traslado, importe_subida, factura_codigo)
+SELECT DISTINCT Envio_Numero, Factura_Numero, Envio_Fecha_Programada, Envio_Fecha, Envio_Total, Envio_ImporteTraslado, Envio_importeSubida, Fact.codigo FROM gd_esquema.Maestra
+-- joins para factura_codigo
+-- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
+JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
+								Direc.provincia_codigo = Prov.codigo AND 
+								Direc.localidad_codigo = Loc.codigo
+JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
+							Suc.direccion_codigo = Direc.codigo
+JOIN [MVM].[Factura] Fact ON Factura_Numero = Fact.nro_factura AND
+							Suc.codigo = Fact.sucursal_codigo AND
+							Factura_Fecha = Fact.fecha_hora
 
 /* Migracion Compra */
-INSERT INTO [MVM].[Compra] (nro_compra, fecha, total, sucursal_codigo, proveedor_codigo, detalle_compra_codigo)
-SELECT DISTINCT Compra_Numero, Compra_Fecha, Compra_Total FROM gd_esquema.Maestra
+INSERT INTO [MVM].[Compra] (nro_compra, fecha, total, sucursal_codigo, proveedor_codigo)
+SELECT DISTINCT Compra_Numero, Compra_Fecha, Compra_Total, Suc.codigo, Proveed.codigo FROM gd_esquema.Maestra
 -- joins para sucursal_codigo
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
@@ -855,29 +853,23 @@ JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND
 -- join para proveedor_codigo
 JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND 
 								Proveedor_RazonSocial = Proveed.razon_social
--- joins para detalle_compra_codigo
-JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND 
-							Material_Descripcion = Mat.descripcion AND 
-							Material_Precio = Mat.precio
-JOIN [MVM].[DetalleCompra] DetComp ON Detalle_Compra_Precio = DetComp.precio_unitario AND 
-									Detalle_Compra_Cantidad =  DetComp.cantidad AND 
-									Detalle_Compra_SubTotal = DetComp.subtotal AND 
-									Suc.codigo = DetComp.sucursal_codigo AND 
-									Mat.codigo = DetComp.material_codigo
 
 /* Migracion Detalle Compra */
-INSERT INTO [MVM].[DetalleCompra] (precio_unitario, cantidad, subtotal, sucursal_codigo, material_codigo)
-SELECT DISTINCT Detalle_Compra_Precio, Detalle_Compra_Cantidad, Detalle_Compra_SubTotal FROM gd_esquema.Maestra
--- joins para sucursal_codigo
+INSERT INTO [MVM].[DetalleCompra] (precio_unitario, cantidad, subtotal, compra_codigo, material_codigo)
+SELECT DISTINCT Detalle_Compra_Precio, Detalle_Compra_Cantidad, Detalle_Compra_SubTotal, Comp.codigo, Mat.codigo FROM gd_esquema.Maestra
+-- joins para compra_codigo
+-- SI LLEGA A REPETIRSE ALGÚN DATO, HACER JOIN TAMBIÉN CON CLIENTE O AGREGAR EL TOTAL
 JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND 
+JOIN [MVM].[Direccion] Direc ON Sucursal_Direccion = Direc.direccion AND
 								Direc.provincia_codigo = Prov.codigo AND 
 								Direc.localidad_codigo = Loc.codigo
 JOIN [MVM].[Sucursal] Suc ON Sucursal_NroSucursal = Suc.nro_sucursal AND 
 							Suc.direccion_codigo = Direc.codigo
+JOIN [MVM].[Compra] Comp ON Compra_Numero = Comp.nro_compra AND
+							Suc.codigo = Comp.sucursal_codigo AND
+							Compra_Fecha = Comp.fecha
 -- join para material_codigo
 JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND
 							Material_Descripcion = Mat.descripcion AND 
 							Material_Precio = Mat.precio
-
