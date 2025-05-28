@@ -466,6 +466,7 @@ ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
     CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES [MVM].[Material](codigo);
 
 --------------------------------- Creación de indices --------------------------------------------------
+
 -- Provincia 
 CREATE INDEX IX_Provincia_Codigo ON [MVM].[Provincia](codigo);
 
@@ -504,6 +505,34 @@ CREATE INDEX IX_Sillon_DetallePedido ON [MVM].[Sillon](detalle_pedido_codigo);
 -- Sillon_Material
 CREATE INDEX IX_SillonMaterial_Sillon ON [MVM].[Sillon_Material](codigo_sillon);
 CREATE INDEX IX_SillonMaterial_Material ON [MVM].[Sillon_Material](codigo_material);
+
+-- Proveedor
+CREATE INDEX IX_Proveedor_Codigo ON [MVM].[Proveedor](codigo);
+CREATE INDEX IX_Proveedor_Direccion ON [MVM].[Proveedor](direccion_codigo);
+
+-- Factura
+CREATE INDEX IX_Factura_Codigo ON [MVM].[Factura](codigo);
+CREATE INDEX IX_Factura_Sucursal ON [MVM].[Factura](sucursal_codigo);
+CREATE INDEX IX_Factura_Cliente ON [MVM].[Factura](cliente_codigo);
+
+-- DetalleFactura
+CREATE INDEX IX_DetalleFactura_Codigo ON [MVM].[DetalleFactura](codigo);
+CREATE INDEX IX_DetalleFactura_Factura ON [MVM].[DetalleFactura](factura_codigo);
+CREATE INDEX IX_DetalleFactura_DetallePedido ON [MVM].[DetalleFactura](detalle_pedido_codigo);
+
+-- Envio
+CREATE INDEX IX_Envio_Codigo ON [MVM].[Envio](codigo);
+CREATE INDEX IX_Envio_Factura ON [MVM].[Envio](factura_codigo);
+
+-- Compra
+CREATE INDEX IX_Compra_Codigo ON [MVM].[Compra](codigo);
+CREATE INDEX IX_Compra_Sucursal ON [MVM].[Compra](sucursal_codigo);
+CREATE INDEX IX_Compra_Proveedor ON [MVM].[Compra](proveedor_codigo);
+
+-- DetalleCompra
+CREATE INDEX IX_DetalleCompra_Codigo ON [MVM].[DetalleCompra](codigo);
+CREATE INDEX IX_DetalleCompra_Compra ON [MVM].[DetalleCompra](compra_codigo);
+CREATE INDEX IX_DetalleCompra_Material ON [MVM].[DetalleCompra](material_codigo);
 
 --------------------------- Migración de tablas --------------------------------------------------------
 
@@ -962,3 +991,9 @@ EXEC MigracionMadera;
 EXEC MigracionTela;
 EXEC MigracionSillon;
 EXEC MigracionSillon_Material;
+EXEC MigracionProveedor;
+EXEC MigracionFactura;
+EXEC MigracionDetalleFactura;
+EXEC MigracionEnvio;
+EXEC MigracionCompra;
+EXEC MigracionDetalleCompra;
