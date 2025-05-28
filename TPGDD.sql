@@ -185,7 +185,7 @@ CREATE TABLE [MVM].[Factura] (
 	[sucursal_codigo]			[BIGINT],
 	[cliente_codigo]			[BIGINT],
 	[fecha_hora]				[DATETIME2](6),
-	[total]						[DECIMAL](18,2)
+	[total]						[DECIMAL](38,2)
 ) ON [PRIMARY]
 GO
 
@@ -194,33 +194,33 @@ CREATE TABLE [MVM].[DetalleFactura] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
 	[factura_codigo]			[BIGINT],
 	[detalle_pedido_codigo]		[BIGINT],
-	[precio_unitario]			[DECIMAL](18),
-	[cantidad]					[DECIMAL](18),
-	[subtotal]					[DECIMAL](18)
+	[precio_unitario]			[DECIMAL](18,2),
+	[cantidad]					[DECIMAL](18,0),
+	[subtotal]					[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 
 /* Envio */
 CREATE TABLE [MVM].[Envio] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[nro_envio]					[DECIMAL](18),
+	[nro_envio]					[DECIMAL](18,0),
 	[factura_codigo]			[BIGINT],
 	[fecha_programada]			[DATETIME2](6),
 	[fecha_entrega]				[DATETIME2](6),
-	[total]						[DECIMAL](18),
-	[importe_traslado]			[DECIMAL](18),
-	[importe_subida]			[DECIMAL](18)
+	[total]						[DECIMAL](18,2),
+	[importe_traslado]			[DECIMAL](18,2),
+	[importe_subida]			[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 
 /* Compra */
 CREATE TABLE [MVM].[Compra] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[nro_compra]				[DECIMAL](18),
+	[nro_compra]				[DECIMAL](18,0),
 	[sucursal_codigo]			[BIGINT],
 	[proveedor_codigo]			[BIGINT],
 	[fecha]						[DATETIME2](6),
-	[total]						[DECIMAL](18)
+	[total]						[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 
@@ -229,9 +229,9 @@ CREATE TABLE [MVM].[DetalleCompra] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
 	[compra_codigo]				[BIGINT],
 	[material_codigo]			[BIGINT],
-	[precio_unitario]			[DECIMAL](18),
-	[cantidad]					[DECIMAL](18),
-	[subtotal]					[DECIMAL](18)
+	[precio_unitario]			[DECIMAL](18,2),
+	[cantidad]					[DECIMAL](18,0),
+	[subtotal]					[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 	
@@ -637,7 +637,7 @@ JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 END
 GO
 
- /* Migracion Estado */
+/* Migracion Estado */
 CREATE PROCEDURE MigracionEstado
 AS
 BEGIN
@@ -695,7 +695,7 @@ SELECT M.Material_Nombre, M.Material_Descripcion, M.Material_Precio FROM gd_esqu
 END
 GO
 
-/* Relleno */ 
+/* Migración Relleno */ 
 CREATE PROCEDURE MigracionRelleno
 AS
 BEGIN
@@ -852,10 +852,12 @@ BEGIN
 								Suc.codigo = Fact.sucursal_codigo AND
 								Factura_Fecha = Fact.fecha_hora
 	-- joins para detalle_pedido_codigo --
-	JOIN [MVM].[DetallePedido] DetPedido ON 
-											Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND 
-											Detalle_Pedido_Precio = DetPedido.precio_sillon AND 
-											Detalle_Pedido_SubTotal = DetPedido.subtotal
+	JOIN [MVM].[Pedido] Pedido ON Pedido_Numero = Pedido.nro_pedido AND
+								Suc.codigo = Pedido.sucursal_codigo AND
+								Pedido_Fecha = Pedido.fecha
+	JOIN [MVM].[DetallePedido] DetPedido ON Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND 
+											Detalle_Pedido_SubTotal = DetPedido.subtotal AND
+											Pedido.codigo = DetPedido.pedido_codigo
 END
 GO
 
