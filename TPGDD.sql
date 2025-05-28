@@ -64,23 +64,23 @@ GO
 
 /* Pedido */
 CREATE TABLE [MVM].[Pedido] (
-	[nro_pedido]				[BIGINT] IDENTITY(1,1)	NOT NULL,
+	[codigo]					[BIGINT] IDENTITY(1,1)	NOT NULL,
+	[nro_pedido]				[DECIMAL](18,2),
 	[sucursal_codigo]			[BIGINT],
 	[cliente_codigo]			[BIGINT],
-	[fecha]					[DATETIME2](6),
-	[detalle_pedido_codigo]	 		[BIGINT],
-	[total]					[DECIMAL](18,2),
-	[estado_actual_codigo]  		[BIGINT]
+	[fecha]						[DATETIME2](6),
+	[total]						[DECIMAL](18,2),
+	/*[estado_actual_codigo]  	[BIGINT] CHEQUEAR SI SE DEJA */
 ) ON [PRIMARY]
 GO
 
 /* Detalle Pedido */
 CREATE TABLE [MVM].[DetallePedido] (
-	[codigo]				[BIGINT] IDENTITY(1,1)	NOT NULL,
-	[sucursal_codigo]			[BIGINT],
+	[codigo]					[BIGINT] IDENTITY(1,1)	NOT NULL,
+	[pedido_codigo]				[BIGINT],
 	[cantidad_sillones]			[BIGINT],
 	[precio_sillon]				[DECIMAL](18,2),
-	[subtotal]				[DECIMAL](18,2)
+	[subtotal]					[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 
@@ -88,9 +88,7 @@ GO
 CREATE TABLE [MVM].[Estado] (
 	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[tipo]		 			[NVARCHAR](255),
-	[fecha]					[DATETIME2](6),
-	[motivo]			 	[NVARCHAR](255),
-	[nro_pedido] [BIGINT]
+	[pedido_codigo]			[BIGINT]
 ) ON [PRIMARY]
 GO
 
@@ -99,7 +97,7 @@ CREATE TABLE [MVM].[PedidoCancelacion] (
 	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[fecha]		 			[DATETIME2](6),
 	[motivo]	 			[NVARCHAR](255),
-	[nro_pedido] [BIGINT]
+	[pedido_codigo]			[BIGINT]
 ) ON [PRIMARY]
 GO
 
@@ -108,7 +106,7 @@ CREATE TABLE [MVM].[Medida] (
 	[codigo]		  		[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[alto]			  		[DECIMAL](18,2),
 	[ancho]			  		[DECIMAL](18,2),
-	[profundidad]	  			[DECIMAL](18,2),
+	[profundidad]	  		[DECIMAL](18,2),
 	[precio]		  		[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
@@ -187,7 +185,7 @@ CREATE TABLE [MVM].[Factura] (
 	[sucursal_codigo]			[BIGINT],
 	[cliente_codigo]			[BIGINT],
 	[fecha_hora]				[DATETIME2](6),
-	[total]						[DECIMAL](18)
+	[total]						[DECIMAL](18,2)
 ) ON [PRIMARY]
 GO
 
@@ -265,11 +263,11 @@ ADD CONSTRAINT PK_Cliente PRIMARY KEY (codigo);
 
 /* Pedido */
 ALTER TABLE [MVM].[Pedido]
-ADD CONSTRAINT PK_Pedido PRIMARY KEY (nro_pedido, sucursal_codigo);
+ADD CONSTRAINT PK_Pedido PRIMARY KEY (codigo);
 
 /* Detalle Pedido */
 ALTER TABLE [MVM].[DetallePedido]
-ADD CONSTRAINT PK_DetallePedido PRIMARY KEY (codigo, sucursal_codigo);
+ADD CONSTRAINT PK_DetallePedido PRIMARY KEY (codigo);
 
 /* Estado */
 ALTER TABLE [MVM].[Estado]
@@ -367,29 +365,20 @@ ALTER TABLE [MVM].[Pedido]
 ADD CONSTRAINT FK_Pedido_Cliente
 FOREIGN KEY (cliente_codigo) REFERENCES [MVM].[Cliente](codigo);
 
--- revisar, esto va a fallar, se tiene que cambiar tambien el el der
-ALTER TABLE [MVM].[Pedido]
-ADD CONSTRAINT FK_Pedido_DetallePedido
-FOREIGN KEY (detalle_pedido_codigo) REFERENCES [MVM].[DetallePedido](codigo);
-
-ALTER TABLE [MVM].[Pedido]
-ADD CONSTRAINT FK_Pedido_Estado
-FOREIGN KEY (estado_actual_codigo) REFERENCES [MVM].[Estado](codigo);
-
 /* Detalle Pedido */
 ALTER TABLE [MVM].[DetallePedido]
-ADD CONSTRAINT FK_DetallePedido_Sucursal
-FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
+ADD CONSTRAINT FK_DetallePedido_Pedido
+FOREIGN KEY (pedido_codigo) REFERENCES [MVM].[Pedido](codigo);
 
 /* Estado */
 ALTER TABLE [MVM].[Estado]
 ADD CONSTRAINT FK_Estado_Pedido
-FOREIGN KEY (nro_pedido) REFERENCES [MVM].[Pedido](nro_pedido);
+FOREIGN KEY (pedido_codigo) REFERENCES [MVM].[Pedido](codigo);
 
 /* Pedido Cancelacion */
 ALTER TABLE [MVM].[PedidoCancelacion]
 ADD CONSTRAINT FK_PedidoCancelacion_Pedido
-FOREIGN KEY (nro_pedido) REFERENCES [MVM].[Pedido](nro_pedido);
+FOREIGN KEY (pedido_codigo) REFERENCES [MVM].[Pedido](codigo);
 
 /* Sillon */
 ALTER TABLE [MVM].[Sillon]
@@ -447,7 +436,7 @@ ADD CONSTRAINT FK_Compra_Sucursal
 FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[Sucursal](codigo);
 
 ALTER TABLE [MVM].[Compra]
-ADD CONSTRAINT FK_Compra_Provvedor
+ADD CONSTRAINT FK_Compra_Proveedor
 FOREIGN KEY (proveedor_codigo) REFERENCES [MVM].[Proveedor](codigo);
 
 /* Detalle Compra */
@@ -462,21 +451,41 @@ FOREIGN KEY (material_codigo) REFERENCES [MVM].[Material](codigo);
  --------------------------- Claves primarias y foráneas para los subtipos  ---------------------------
 
 /* Relleno */
-ALTER TABLE Relleno
+ALTER TABLE [MVM].[Relleno]
 ADD CONSTRAINT PK_Relleno PRIMARY KEY (codigo),
-    CONSTRAINT FK_Relleno_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
+    CONSTRAINT FK_Relleno_Material FOREIGN KEY (codigo) REFERENCES [MVM].[Material](codigo);
 
 /* Estado */
-ALTER TABLE Madera
+ALTER TABLE [MVM].[Madera]
 ADD CONSTRAINT PK_Madera PRIMARY KEY (codigo),
-    CONSTRAINT FK_Madera_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
+    CONSTRAINT FK_Madera_Material FOREIGN KEY (codigo) REFERENCES [MVM].[Material](codigo);
 
 /* Tela */
-ALTER TABLE Tela
+ALTER TABLE [MVM].[Tela]
 ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
-    CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES Material(codigo);
+    CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES [MVM].[Material](codigo);
 
---------------------------- Migración de tablas ---------------------------
+--------------------------------- Creación de indices --------------------------------------------------
+-- Pedido
+CREATE INDEX IX_Pedido_Sucursal ON [MVM].[Pedido](sucursal_codigo);
+CREATE INDEX IX_Pedido_Cliente ON [MVM].[Pedido](cliente_codigo);
+
+-- DetallePedido
+CREATE INDEX IX_DetallePedido_Pedido ON [MVM].[DetallePedido](pedido_codigo);
+
+-- Estado
+CREATE INDEX IX_Estado_Pedido ON [MVM].[Estado](pedido_codigo);
+
+-- Sillon
+CREATE INDEX IX_Sillon_Modelo ON [MVM].[Sillon](modelo_codigo);
+CREATE INDEX IX_Sillon_Medida ON [MVM].[Sillon](medida_codigo);
+CREATE INDEX IX_Sillon_DetallePedido ON [MVM].[Sillon](detalle_pedido_codigo);
+
+-- Sillon_Material
+CREATE INDEX IX_SillonMaterial_Sillon ON [MVM].[Sillon_Material](codigo_sillon);
+CREATE INDEX IX_SillonMaterial_Material ON [MVM].[Sillon_Material](codigo_material);
+
+--------------------------- Migración de tablas --------------------------------------------------------
 
 /* Migracion Provincia */
 INSERT INTO [MVM].[Provincia] (nombre)
@@ -580,204 +589,177 @@ JOIN [MVM].[Localidad] Loc ON Cliente_Localidad = Loc.nombre
 -- Encuentro el campo direccion dentro de la tabla maestra pero tmb tengo que chequear que coincida provincia y localidad
 JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
 
-
-/* Migracion Detalle Pedido */
-INSERT INTO [MVM].[DetallePedido] (sucursal_codigo, cantidad_sillones, precio_sillon, subtotal)
-SELECT Suc.codigo, M.Detalle_Pedido_Cantidad, M.Detalle_Pedido_Precio, M.Detalle_Pedido_SubTotal FROM gd_esquema.Maestra M
-JOIN [MVM].[Sucursal] Suc ON M.Sucursal_NroSucursal = Suc.nro_sucursal -- a chequear
-					  AND Suc.direccion_codigo IN (
-					  SELECT Dir.codigo FROM [MVM].[Direccion] Dir
-					  JOIN [MVM].[Localidad] Loc ON Loc.codigo = Dir.localidad_codigo
-					  JOIN [MVM].[Provincia] Prov ON Prov.codigo = Dir.provincia_codigo
-					  WHERE Loc.nombre = M.Sucursal_Localidad AND Prov.nombre = M.Sucursal_Provincia
-				  )
-WHERE NOT EXISTS (
-    SELECT 1 FROM [MVM].[DetallePedido] DP
-    WHERE DP.sucursal_codigo = Suc.codigo
-      AND DP.cantidad_sillones = M.Detalle_Pedido_Cantidad
-      AND DP.precio_sillon = M.Detalle_Pedido_Precio
-      AND DP.subtotal = M.Detalle_Pedido_SubTotal
-)
-
-
 /* Migracion Pedido */
-INSERT INTO [MVM].[Pedido] (nro_pedido, sucursal_codigo, cliente_codigo, fecha, detalle_pedido_codigo, total)
-SELECT M.Pedido_Numero, Suc.codigo, Clie.codigo, M.Pedido_Fecha, M.Pedido_Total from gd_esquema.Maestra M
--- joins para sucursal_codigo
+GO -- SIN UN GO ACA ANTES SE ROMPE. Después se puede sacar
+CREATE PROCEDURE MigracionPedido
+AS
+BEGIN
+INSERT INTO [MVM].[Pedido] (nro_pedido, sucursal_codigo, cliente_codigo, fecha, total)
+SELECT DISTINCT M.Pedido_Numero, Suc.codigo, Clie.codigo, M.Pedido_Fecha, M.Pedido_Total from gd_esquema.Maestra M
 JOIN [MVM].[Sucursal] Suc ON M.Sucursal_NroSucursal = Suc.nro_sucursal
-AND Suc.direccion_codigo IN (
-    SELECT Dir.codigo
-    FROM [MVM].[Direccion] Dir
-    JOIN [MVM].[Localidad] Loc ON Loc.codigo = Dir.localidad_codigo
-    JOIN [MVM].[Provincia] Prov ON Prov.codigo = Dir.provincia_codigo
-    WHERE Loc.nombre = M.Sucursal_Localidad AND Prov.nombre = M.Sucursal_Provincia
-)
--- join para cliente_codigo
+JOIN [MVM].[Direccion] Dir ON Suc.direccion_codigo = Dir.codigo
+JOIN [MVM].[Localidad] Loc ON Loc.codigo = Dir.localidad_codigo AND Loc.nombre = M.Sucursal_Localidad
+JOIN [MVM].[Provincia] Prov ON Prov.codigo = Dir.provincia_codigo  AND Prov.nombre = M.Sucursal_Provincia
 JOIN [MVM].[Cliente] Clie ON M.Cliente_Dni = Clie.dni 
 					 AND M.Cliente_Nombre = Clie.nombre
 					 AND M.Cliente_Apellido = Clie.apellido
 					 AND M.Cliente_FechaNacimiento = Clie.fecha_nacimiento
-WHERE NOT EXISTS (
-    SELECT 1 FROM [MVM].[Pedido] P
-    WHERE P.nro_pedido = M.Pedido_Numero
-)
+END
+GO
+
+/* Migracion Detalle Pedido */
+CREATE PROCEDURE MigracionDetallePedido
+AS
+BEGIN
+INSERT INTO [MVM].[DetallePedido] (pedido_codigo, cantidad_sillones, precio_sillon, subtotal)
+SELECT DISTINCT Ped.codigo, M.Detalle_Pedido_Cantidad, M.Detalle_Pedido_Precio, M.Detalle_Pedido_SubTotal FROM gd_esquema.Maestra M
+JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
+END
+GO
+
  /* Migracion Estado */
---evaluar sacar fecha y motivo de estado
-INSERT INTO [MVM].[Estado] (tipo, nro_pedido)
-SELECT Pedido_Estado, Ped.nro_pedido
+CREATE PROCEDURE MigracionEstado
+AS
+BEGIN
+INSERT INTO [MVM].[Estado] (tipo, pedido_codigo)
+SELECT DISTINCT Pedido_Estado, Ped.codigo
 FROM gd_esquema.Maestra M
 JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
-WHERE NOT EXISTS (
-    SELECT 1 FROM [MVM].[Estado] E
-    WHERE E.tipo = M.Pedido_Estado AND E.nro_pedido = M.Pedido_Numero
-)
+END
+GO
 
 /* Actualizacion pedido : Se requiere un Update ya que hay una dependencia circular entre Pedido y estado*/
-UPDATE Ped
+/*UPDATE Ped
 SET Ped.estado_actual_codigo = Est.codigo
 FROM [MVM].[Pedido] Ped
 JOIN [MVM].[Estado] Est ON Est.nro_pedido = Ped.nro_pedido AND Est.tipo = (
     SELECT Pedido_Estado FROM gd_esquema.Maestra M2 WHERE M2.Pedido_Numero = Ped.nro_pedido
-)
+)  TODO: CHEQUEAR SI SE DEJA*/
 
 /* Migracion Pedido Cancelacion */
-INSERT INTO [MVM].[PedidoCancelacion] (fecha, motivo, nro_pedido)
-SELECT  M.Pedido_Cancelacion_Fecha, M.Pedido_Cancelacion_Motivo, Ped.nro_pedido FROM gd_esquema.Maestra M
+CREATE PROCEDURE MigracionPedidoCancelacion
+AS
+BEGIN
+INSERT INTO [MVM].[PedidoCancelacion] (fecha, motivo, pedido_codigo)
+SELECT  M.Pedido_Cancelacion_Fecha, M.Pedido_Cancelacion_Motivo, Ped.codigo FROM gd_esquema.Maestra M
 -- join para nro_pedido
 JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 WHERE M.Pedido_Estado = 'CANCELADO'
-
+END
+GO
 
 /* Migración Medida */
+CREATE PROCEDURE MigracionMedida
+AS
+BEGIN
 INSERT INTO [MVM].[Medida] (alto, ancho, profundidad, precio)
-SELECT M.Sillon_Medida_Alto, M.Sillon_Medida_Ancho, M.Sillon_Medida_Profundidad, M.Sillon_Medida_Precio FROM gd_esquema.Maestra M
-WHERE NOT EXISTS (
-    SELECT 1 FROM [MVM].[Medida] Me
-    WHERE Me.alto = M.Sillon_Medida_Alto
-      AND Me.ancho = M.Sillon_Medida_Ancho
-      AND Me.profundidad = M.Sillon_Medida_Profundidad
-      AND Me.precio = M.Sillon_Medida_Precio
-) -- Se utiliza not exists en vez de distinct para mejorar la performance
+SELECT DISTINCT M.Sillon_Medida_Alto, M.Sillon_Medida_Ancho, M.Sillon_Medida_Profundidad, M.Sillon_Medida_Precio FROM gd_esquema.Maestra M
+END
+GO
 
-
-/*Migración Modelo */
+/* Migración Modelo */
+CREATE PROCEDURE MigracionModelo
+AS
+BEGIN
 INSERT INTO [MVM].[Modelo] (codigo, modelo, descripcion, precio_base)
-SELECT M.Sillon_Modelo_Codigo, M.Sillon_Modelo, M.Sillon_Modelo_Descripcion, M.Sillon_Modelo_Precio FROM gd_esquema.Maestra M
-WHERE NOT EXISTS (
-    SELECT 1 FROM [MVM].[Modelo] Mo
-    WHERE Mo.codigo = M.Sillon_Modelo_Codigo
-)
+SELECT DISTINCT M.Sillon_Modelo_Codigo, M.Sillon_Modelo, M.Sillon_Modelo_Descripcion, M.Sillon_Modelo_Precio FROM gd_esquema.Maestra M
+END
+GO
 
-/*Migración Material */
+/* Migración Material */
+CREATE PROCEDURE MigracionMaterial
+AS
+BEGIN
 INSERT INTO [MVM].[Material] (nombre, descripcion, precio)
 SELECT M.Material_Nombre, M.Material_Descripcion, M.Material_Precio FROM gd_esquema.Maestra M
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM [MVM].[Material] Mat
-    WHERE Mat.nombre = M.Material_Nombre
-      AND Mat.descripcion = M.Material_Descripcion
-      AND Mat.precio = M.Material_Precio
-) 
+END
+GO
 
 /* Relleno */ 
+CREATE PROCEDURE MigracionRelleno
+AS
+BEGIN
 INSERT INTO [MVM].[Relleno] (codigo, densidad)
-SELECT Mat.codigo, M.Relleno_Densidad FROM gd_esquema.Maestra M
+SELECT DISTINCT Mat.codigo, M.Relleno_Densidad FROM gd_esquema.Maestra M
 JOIN [MVM].[Material] Mat ON Mat.nombre = M.Material_Nombre
 					  AND Mat.descripcion = M.Material_Descripcion
 					  AND Mat.precio = M.Material_Precio
 WHERE M.Material_Tipo = 'Relleno'
-AND NOT EXISTS (
-    SELECT 1 FROM [MVM].[Relleno] R
-    WHERE R.codigo = Mat.codigo
-)
+END
+GO
 
-/*Migración Madera */ 
+/* Migración Madera */
+CREATE PROCEDURE MigracionMadera
+AS
+BEGIN
 INSERT INTO [MVM].[Madera] (codigo, color, dureza)
-SELECT Mat.codigo, M.Madera_Color, M.Madera_Dureza FROM gd_esquema.Maestra M
+SELECT DISTINCT Mat.codigo, M.Madera_Color, M.Madera_Dureza FROM gd_esquema.Maestra M
 JOIN [MVM].[Material] Mat ON Mat.nombre = M.Material_Nombre
 					  AND Mat.descripcion = M.Material_Descripcion
 					  AND Mat.precio = M.Material_Precio
 WHERE M.Material_Tipo = 'Madera'
-AND NOT EXISTS (
-    SELECT 1 FROM [MVM].[Madera] Mad
-    WHERE Mad.codigo = Mat.codigo
-)
+END
+GO
 
-/*Migración Tela */ 
+/* Migración Tela */ 
+CREATE PROCEDURE MigracionTela
+AS
+BEGIN
 INSERT INTO [MVM].[Tela] (codigo, color, textura)
-SELECT Mat.codigo, M.Tela_Color, M.Tela_Textura FROM gd_esquema.Maestra M
+SELECT DISTINCT Mat.codigo, M.Tela_Color, M.Tela_Textura FROM gd_esquema.Maestra M
 JOIN [MVM].[Material] Mat ON Mat.nombre = M.Material_Nombre
 					  AND Mat.descripcion = M.Material_Descripcion
 					  AND Mat.precio = M.Material_Precio
 WHERE M.Material_Tipo = 'Tela'
-AND NOT EXISTS (
-    SELECT 1 FROM [MVM].[Tela] T
-    WHERE T.codigo = Mat.codigo
-)
+END
+GO
 
-/*Migración Sillon */
+/* Migración Sillon */
+CREATE PROCEDURE MigracionSillon
+AS
+BEGIN
 INSERT INTO [MVM].[Sillon] (
     modelo_codigo, medida_codigo, detalle_pedido_codigo
 )
-SELECT 
+SELECT DISTINCT
     Mo.codigo,
     Me.codigo,
     DP.codigo
 FROM gd_esquema.Maestra M
--- join para modelo_codigo
 JOIN [MVM].[Modelo] Mo ON Mo.codigo = M.Sillon_Modelo_Codigo
--- join para medida_codigo
 JOIN [MVM].[Medida] Me ON Me.alto = M.Sillon_Medida_Alto
                   AND Me.ancho = M.Sillon_Medida_Ancho
                   AND Me.profundidad = M.Sillon_Medida_Profundidad
                   AND Me.precio = M.Sillon_Medida_Precio
--- join para detalle_pedido 
+JOIN[MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 JOIN [MVM].[DetallePedido] DP ON DP.cantidad_sillones = M.Detalle_Pedido_Cantidad
                           AND DP.precio_sillon = M.Detalle_Pedido_Precio
                           AND DP.subtotal = M.Detalle_Pedido_SubTotal
-                          AND DP.sucursal_codigo IN ( -- para asegurar la sucursal correcta
-						  SELECT Suc.codigo
-						  FROM [MVM].[Sucursal] Suc
-						  WHERE Suc.nro_sucursal = M.Sucursal_NroSucursal
-						  AND Suc.direccion_codigo IN (
-							SELECT Dir.codigo
-							FROM MVM.Direccion Dir
-							JOIN MVM.Localidad Loc ON Loc.codigo = Dir.localidad_codigo
-							JOIN MVM.Provincia Prov ON Prov.codigo = Dir.provincia_codigo
-							WHERE Loc.nombre = M.Sucursal_Localidad
-								AND Prov.nombre = M.Sucursal_Provincia
-							)
-						)
-WHERE NOT EXISTS (
-    SELECT 1 FROM [MVM].[Sillon] S
-    WHERE S.modelo_codigo = Mo.codigo
-      AND S.medida_codigo = Me.codigo
-      AND S.detalle_pedido_codigo = DP.codigo
-)
-
-/*Migración Sillon_Material */
+END
+GO
+                        
+/* Migración Sillon_Material */
+CREATE PROCEDURE MigracionSillon_Material
+AS
+BEGIN
 INSERT INTO [MVM].[Sillon_Material] (codigo_sillon, codigo_material)
-SELECT 
+SELECT DISTINCT
     Sil.codigo, Ma.codigo
 FROM gd_esquema.Maestra M
 JOIN [MVM].[Modelo] Mo ON Mo.codigo = M.Sillon_Modelo_Codigo
 JOIN [MVM].[Medida] Me ON Me.alto = M.Sillon_Medida_Alto 
-                  AND Me.ancho = M.Sillon_Medida_Ancho
-                  AND Me.profundidad = M.Sillon_Medida_Profundidad
-                  AND Me.precio = M.Sillon_Medida_Precio
+					AND Me.ancho = M.Sillon_Medida_Ancho
+					AND Me.profundidad = M.Sillon_Medida_Profundidad
+					 AND Me.precio = M.Sillon_Medida_Precio
 JOIN [MVM].[Material] Ma ON Ma.nombre = M.Material_Nombre
                     AND Ma.descripcion = M.Material_Descripcion
                     AND Ma.precio = M.Material_Precio
-JOIN [MVM].[Sillon] Sil ON
-    Sil.modelo_codigo = Mo.codigo 
-	AND Sil.medida_codigo = Me.codigo
-WHERE NOT EXISTS (
-    SELECT 1 FROM [MVM].[Sillon_Material] SM
-    WHERE SM.codigo_sillon = Sil.codigo AND SM.codigo_material = Ma.codigo
-)
+JOIN [MVM].[Sillon] Sil ON Sil.modelo_codigo = Mo.codigo 
+					AND Sil.medida_codigo = Me.codigo
+END
+GO
 
 /* Migracion Proveedor */
-GO -- SIN UN GO ACA ANTES SE ROMPE. Después se puede sacar
 CREATE PROCEDURE MigracionProveedor
 AS
 BEGIN
@@ -850,7 +832,7 @@ BEGIN
 								Suc.codigo = Fact.sucursal_codigo AND
 								Factura_Fecha = Fact.fecha_hora
 	-- joins para detalle_pedido_codigo --
-	JOIN [MVM].[DetallePedido] DetPedido ON Suc.codigo = DetPedido.sucursal_codigo AND
+	JOIN [MVM].[DetallePedido] DetPedido ON 
 											Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND 
 											Detalle_Pedido_Precio = DetPedido.precio_sillon AND 
 											Detalle_Pedido_SubTotal = DetPedido.subtotal
@@ -943,3 +925,18 @@ BEGIN
 								Material_Precio = Mat.precio
 END
 GO
+
+-------------------- Ejecucion Procedures ---------------------------
+
+EXEC MigracionPedido;
+EXEC MigracionDetallePedido;
+EXEC MigracionEstado;
+EXEC MigracionPedidoCancelacion;
+EXEC MigracionMedida;
+EXEC MigracionModelo;
+EXEC MigracionMaterial;
+EXEC MigracionRelleno;
+EXEC MigracionMadera;
+EXEC MigracionTela;
+EXEC MigracionSillon;
+EXEC MigracionSillon_Material;
