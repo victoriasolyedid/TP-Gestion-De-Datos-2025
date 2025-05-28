@@ -1,3 +1,52 @@
+---------------------- Eliminacion Tablas ------------------------------
+-- Primero eliminamos las tablas más dependientes (tablas puente o con muchas FK)
+DROP TABLE IF EXISTS [MVM].[Sillon_Material];
+
+-- Tablas hijas de Sillon
+DROP TABLE IF EXISTS [MVM].[Relleno];
+DROP TABLE IF EXISTS [MVM].[Madera];
+DROP TABLE IF EXISTS [MVM].[Tela];
+
+-- Tablas que dependen de DetallePedido
+DROP TABLE IF EXISTS [MVM].[Sillon];
+DROP TABLE IF EXISTS [MVM].[DetalleFactura];
+
+-- Tablas hijas de Factura
+DROP TABLE IF EXISTS [MVM].[Envio];
+
+-- Luego las entidades intermedias
+DROP TABLE IF EXISTS [MVM].[Factura];
+
+-- Tablas hijas de Pedido
+DROP TABLE IF EXISTS [MVM].[DetallePedido];
+DROP TABLE IF EXISTS [MVM].[Estado];
+DROP TABLE IF EXISTS [MVM].[PedidoCancelacion];
+
+-- Pedido (requiere eliminación de sus hijas primero)
+DROP TABLE IF EXISTS [MVM].[Pedido];
+
+-- Tablas hijas de Compra
+DROP TABLE IF EXISTS [MVM].[DetalleCompra];
+
+-- Compra
+DROP TABLE IF EXISTS [MVM].[Compra];
+
+-- Tablas base intermedias
+DROP TABLE IF EXISTS [MVM].[Proveedor];
+DROP TABLE IF EXISTS [MVM].[Cliente];
+DROP TABLE IF EXISTS [MVM].[Sucursal];
+DROP TABLE IF EXISTS [MVM].[Direccion];
+DROP TABLE IF EXISTS [MVM].[Localidad];
+DROP TABLE IF EXISTS [MVM].[Provincia];
+
+-- Tablas de catálogo o usadas por sillones
+DROP TABLE IF EXISTS [MVM].[Modelo];
+DROP TABLE IF EXISTS [MVM].[Medida];
+DROP TABLE IF EXISTS [MVM].[Material];
+
+
+-----------------------------------------------------------------------
+
 USE [GD1C2025]
 GO
 
@@ -11,6 +60,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+
 
 -------------------- Creación de las tablas ---------------------------
 
@@ -249,10 +299,6 @@ ADD CONSTRAINT PK_Provincia PRIMARY KEY (codigo);
 ALTER TABLE [MVM].[Direccion]
 ADD CONSTRAINT PK_Direccion PRIMARY KEY (codigo);
 
-/* MedioDeContacto */
-ALTER TABLE [MVM].[MedioDeContacto]
-ADD CONSTRAINT PK_MedioDeContacto PRIMARY KEY (codigo);
-
 /* Sucursal */
 ALTER TABLE [MVM].[Sucursal]
 ADD CONSTRAINT PK_Sucursal PRIMARY KEY (codigo);
@@ -343,18 +389,10 @@ ALTER TABLE [MVM].[Sucursal]
 ADD CONSTRAINT FK_Sucursal_Direccion
 FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[Direccion](codigo);
 
-ALTER TABLE [MVM].[Sucursal]
-ADD CONSTRAINT FK_Sucursal_MedioContacto
-FOREIGN KEY (medio_contacto_codigo) REFERENCES [MVM].[MedioDeContacto](codigo);
-
 /* Cliente */
 ALTER TABLE [MVM].[Cliente]
 ADD CONSTRAINT FK_Cliente_Direccion
 FOREIGN KEY (direccion_codigo) REFERENCES [MVM].[Direccion](codigo);
-
-ALTER TABLE [MVM].[Cliente]
-ADD CONSTRAINT FK_Cliente_MedioContacto
-FOREIGN KEY (medio_contacto_codigo) REFERENCES [MVM].[MedioDeContacto](codigo);
 
 /* Pedido */
 ALTER TABLE [MVM].[Pedido]
@@ -536,6 +574,7 @@ CREATE INDEX IX_DetalleCompra_Material ON [MVM].[DetalleCompra](material_codigo)
 
 --------------------------- Migración de tablas --------------------------------------------------------
 
+SELECT * FROM [MVM].Provincia;
 /* Migracion Provincia */
 GO
 CREATE PROCEDURE MigracionProvincia
@@ -560,6 +599,8 @@ BEGIN
 
 END
 GO
+SELECT * FROM MVM.Provincia;
+GO
 
 /* Migracion Localidad */
 CREATE PROCEDURE MigracionLocalidad
@@ -582,6 +623,9 @@ BEGIN
 	FROM gd_esquema.Maestra
 	WHERE Cliente_Localidad IS NOT NULL;
 END
+GO
+SELECT DISTINCT * FROM MVM.Localidad
+ORDER BY nombre desc;
 GO
 
 /* Migracion Direccion */
@@ -621,6 +665,8 @@ BEGIN
 	WHERE Sucursal_Direccion IS NOT NULL;
 END 
 GO
+SELECT DISTINCT * FROM MVM.Direccion;
+GO
 
 /* Migracion Sucursal */
 CREATE PROCEDURE MigracionSucursal
@@ -638,6 +684,9 @@ BEGIN
 	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
 	JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo;
 END
+GO
+SELECT DISTINCT * FROM MVM.Sucursal;
+SELECT DISTINCT Sucursal_NroSucursal FROM gd_esquema.Maestra;
 GO
 
 /* Migracion Cliente */
@@ -661,6 +710,16 @@ BEGIN
 	JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
 END
 GO
+SELECT DISTINCT * FROM MVM.Cliente;
+SELECT DISTINCT Cliente_Dni,		
+		Cliente_Nombre,				
+		Cliente_Apellido,		
+		Cliente_FechaNacimiento, 
+		Cliente_Mail,               
+		Cliente_Telefono
+		FROM gd_esquema.Maestra
+order by Cliente_Dni;
+GO
 
 /* Migracion Pedido */
 CREATE PROCEDURE MigracionPedido
@@ -678,6 +737,9 @@ JOIN [MVM].[Cliente] Clie ON M.Cliente_Dni = Clie.dni
 					 AND M.Cliente_FechaNacimiento = Clie.fecha_nacimiento
 END
 GO
+SELECT DISTINCT * FROM MVM.Pedido;
+GO
+
 
 /* Migracion Detalle Pedido */
 CREATE PROCEDURE MigracionDetallePedido
@@ -687,6 +749,10 @@ INSERT INTO [MVM].[DetallePedido] (pedido_codigo, cantidad_sillones, precio_sill
 SELECT DISTINCT Ped.codigo, M.Detalle_Pedido_Cantidad, M.Detalle_Pedido_Precio, M.Detalle_Pedido_SubTotal FROM gd_esquema.Maestra M
 JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 END
+GO
+SELECT DISTINCT * FROM MVM.DetallePedido
+ORDER BY pedido_codigo desc
+
 GO
 
 /* Migracion Estado */
@@ -721,6 +787,7 @@ END
 GO
 
 /* Migración Medida */
+
 CREATE PROCEDURE MigracionMedida
 AS
 BEGIN
@@ -729,12 +796,17 @@ SELECT DISTINCT M.Sillon_Medida_Alto, M.Sillon_Medida_Ancho, M.Sillon_Medida_Pro
 END
 GO
 
+SELECT DISTINCT Sillon_Medida_Alto, Sillon_Medida_Ancho, Sillon_Medida_Profundidad, Sillon_Medida_Precio FROM gd_esquema.Maestra;
+SELECT * FROM MVM.Medida;
+go
+
 /* Migración Modelo */
 CREATE PROCEDURE MigracionModelo
 AS
 BEGIN
 INSERT INTO [MVM].[Modelo] (codigo, modelo, descripcion, precio_base)
 SELECT DISTINCT M.Sillon_Modelo_Codigo, M.Sillon_Modelo, M.Sillon_Modelo_Descripcion, M.Sillon_Modelo_Precio FROM gd_esquema.Maestra M
+WHERE M.Sillon_Modelo_Codigo IS NOT NULL; -- Se agrega validacion ya que la PK no puede ser NULL
 END
 GO
 
@@ -743,7 +815,7 @@ CREATE PROCEDURE MigracionMaterial
 AS
 BEGIN
 INSERT INTO [MVM].[Material] (nombre, descripcion, precio)
-SELECT M.Material_Nombre, M.Material_Descripcion, M.Material_Precio FROM gd_esquema.Maestra M
+SELECT DISTINCT M.Material_Nombre, M.Material_Descripcion, M.Material_Precio FROM gd_esquema.Maestra M
 END
 GO
 
