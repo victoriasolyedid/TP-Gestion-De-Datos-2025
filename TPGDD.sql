@@ -466,6 +466,26 @@ ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
     CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES [MVM].[Material](codigo);
 
 --------------------------------- Creación de indices --------------------------------------------------
+-- Provincia 
+CREATE INDEX IX_Provincia_Codigo ON [MVM].[Provincia](codigo);
+
+-- Localidad 
+CREATE INDEX IX_Localidad_Codigo ON [MVM].[Localidad](codigo);
+
+-- Dirección
+CREATE INDEX IX_Direccion_Codigo ON [MVM].[Direccion](codigo);
+
+CREATE INDEX IX_Direccion_Provincia ON [MVM].[Direccion](provincia_codigo);
+CREATE INDEX IX_Direccion_Localidad ON [MVM].[Direccion](localidad_codigo);
+
+-- Sucursal 
+CREATE INDEX IX_Sucursal_Codigo ON [MVM].[Sucursal](codigo);
+CREATE INDEX IX_Sucursal_Direccion ON [MVM].[Sucursal](direccion_codigo);
+
+-- Cliente
+CREATE INDEX IX_Cliente_Codigo ON [MVM].[Cliente](codigo);
+CREATE INDEX IX_Cliente_Direccion ON [MVM].[Cliente](direccion_codigo);
+
 -- Pedido
 CREATE INDEX IX_Pedido_Sucursal ON [MVM].[Pedido](sucursal_codigo);
 CREATE INDEX IX_Pedido_Cliente ON [MVM].[Pedido](cliente_codigo);
