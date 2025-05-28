@@ -537,109 +537,132 @@ CREATE INDEX IX_DetalleCompra_Material ON [MVM].[DetalleCompra](material_codigo)
 --------------------------- Migración de tablas --------------------------------------------------------
 
 /* Migracion Provincia */
-INSERT INTO [MVM].[Provincia] (nombre)
-SELECT DISTINCT Sucursal_Provincia AS nombre
-FROM gd_esquema.Maestra
-WHERE Sucursal_Provincia IS NOT NULL
+GO
+CREATE PROCEDURE MigracionProvincia
+AS
+BEGIN
+	INSERT INTO [MVM].[Provincia] (nombre)
+	SELECT DISTINCT Sucursal_Provincia AS nombre
+	FROM gd_esquema.Maestra
+	WHERE Sucursal_Provincia IS NOT NULL
 
-UNION
+	UNION
 
-SELECT DISTINCT Cliente_Provincia AS nombre
-FROM gd_esquema.Maestra
-WHERE Cliente_Provincia IS NOT NULL
+	SELECT DISTINCT Cliente_Provincia AS nombre
+	FROM gd_esquema.Maestra
+	WHERE Cliente_Provincia IS NOT NULL
 
-UNION
+	UNION
 
-SELECT DISTINCT Proveedor_Provincia AS nombre
-FROM gd_esquema.Maestra
-WHERE Proveedor_Provincia IS NOT NULL;
+	SELECT DISTINCT Proveedor_Provincia AS nombre
+	FROM gd_esquema.Maestra
+	WHERE Proveedor_Provincia IS NOT NULL;
+
+END
+GO
 
 /* Migracion Localidad */
-INSERT INTO [MVM].[Localidad] (nombre)
-SELECT DISTINCT Sucursal_Localidad AS nombre
-FROM gd_esquema.Maestra
-WHERE Sucursal_Localidad IS NOT NULL
+CREATE PROCEDURE MigracionLocalidad
+AS
+BEGIN
+	INSERT INTO [MVM].[Localidad] (nombre)
+	SELECT DISTINCT Sucursal_Localidad AS nombre
+	FROM gd_esquema.Maestra
+	WHERE Sucursal_Localidad IS NOT NULL
 
-UNION
+	UNION
 
-SELECT DISTINCT Proveedor_Localidad AS nombre
-FROM gd_esquema.Maestra
-WHERE Proveedor_Localidad IS NOT NULL
+	SELECT DISTINCT Proveedor_Localidad AS nombre
+	FROM gd_esquema.Maestra
+	WHERE Proveedor_Localidad IS NOT NULL
 
-UNION
+	UNION
 
-SELECT DISTINCT Cliente_Localidad AS nombre
-FROM gd_esquema.Maestra
-WHERE Cliente_Localidad IS NOT NULL;
-
+	SELECT DISTINCT Cliente_Localidad AS nombre
+	FROM gd_esquema.Maestra
+	WHERE Cliente_Localidad IS NOT NULL;
+END
+GO
 
 /* Migracion Direccion */
-INSERT INTO [MVM].[Direccion] (direccion, provincia_codigo, localidad_codigo)
-SELECT DISTINCT 
-    Cliente_Direccion AS direccion,
-    prov.codigo AS provincia_codigo,
-    loc.codigo AS localidad_codigo
-FROM gd_esquema.Maestra 
-JOIN [MVM].[Provincia] prov ON Cliente_Provincia = prov.nombre
-JOIN [MVM].[Localidad] loc ON Cliente_Localidad = loc.nombre
-WHERE Cliente_Direccion IS NOT NULL
+CREATE PROCEDURE MigracionDireccion
+AS
+BEGIN
+	INSERT INTO [MVM].[Direccion] (direccion, provincia_codigo, localidad_codigo)
+	SELECT DISTINCT 
+		Cliente_Direccion AS direccion,
+		prov.codigo AS provincia_codigo,
+		loc.codigo AS localidad_codigo
+	FROM gd_esquema.Maestra 
+	JOIN [MVM].[Provincia] prov ON Cliente_Provincia = prov.nombre
+	JOIN [MVM].[Localidad] loc ON Cliente_Localidad = loc.nombre
+	WHERE Cliente_Direccion IS NOT NULL
 
-UNION
+	UNION
 
-SELECT DISTINCT 
-    Proveedor_Direccion,
-    prov.codigo,
-    loc.codigo
-FROM gd_esquema.Maestra 
-JOIN [MVM].[Provincia] prov ON Proveedor_Provincia = prov.nombre
-JOIN [MVM].[Localidad] loc ON Proveedor_Localidad = loc.nombre
-WHERE Proveedor_Direccion IS NOT NULL
+	SELECT DISTINCT 
+		Proveedor_Direccion,
+		prov.codigo,
+		loc.codigo
+	FROM gd_esquema.Maestra 
+	JOIN [MVM].[Provincia] prov ON Proveedor_Provincia = prov.nombre
+	JOIN [MVM].[Localidad] loc ON Proveedor_Localidad = loc.nombre
+	WHERE Proveedor_Direccion IS NOT NULL
 
-UNION
+	UNION
 
-SELECT DISTINCT 
-    Sucursal_Direccion,
-    prov.codigo,
-    loc.codigo
-FROM gd_esquema.Maestra 
-JOIN [MVM].[Provincia] prov ON Sucursal_Provincia = prov.nombre
-JOIN [MVM].[Localidad] loc ON Sucursal_Localidad = loc.nombre
-WHERE Sucursal_Direccion IS NOT NULL;
-
+	SELECT DISTINCT 
+		Sucursal_Direccion,
+		prov.codigo,
+		loc.codigo
+	FROM gd_esquema.Maestra 
+	JOIN [MVM].[Provincia] prov ON Sucursal_Provincia = prov.nombre
+	JOIN [MVM].[Localidad] loc ON Sucursal_Localidad = loc.nombre
+	WHERE Sucursal_Direccion IS NOT NULL;
+END 
+GO
 
 /* Migracion Sucursal */
-INSERT INTO [MVM].[Sucursal] (nro_sucursal, direccion_codigo, mail, telefono)
-SELECT DISTINCT 
-	Sucursal_NroSucursal,      
-	Dir.codigo,                 
-	Sucursal_Mail,               
-	Sucursal_Telefono
-FROM gd_esquema.Maestra
--- Join para Direccion
-JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo;
-
+CREATE PROCEDURE MigracionSucursal
+AS
+BEGIN
+	INSERT INTO [MVM].[Sucursal] (nro_sucursal, direccion_codigo, mail, telefono)
+	SELECT DISTINCT 
+		Sucursal_NroSucursal,      
+		Dir.codigo,                 
+		Sucursal_Mail,               
+		Sucursal_Telefono
+	FROM gd_esquema.Maestra
+	-- Join para Direccion
+	JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
+	JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo;
+END
+GO
 
 /* Migracion Cliente */
-INSERT INTO [MVM].[Cliente] (dni, nombre, apellido, fecha_nacimiento, direccion_codigo, mail, telefono)
-SELECT DISTINCT
-	Cliente_Dni,		
-	Cliente_Nombre,				
-	Cliente_Apellido,		
-	Cliente_FechaNacimiento,	
-	Dir.codigo,
-	Cliente_Mail,               
-	Cliente_Telefono
-FROM gd_esquema.Maestra
--- Join con Direccion: tengo que encontrar el registro de la tabla direccion (ya creada) que coincide con los datos del cliente que quiero migrar
-JOIN [MVM].[Provincia] Prov ON Cliente_Provincia = Prov.nombre
-JOIN [MVM].[Localidad] Loc ON Cliente_Localidad = Loc.nombre
--- Encuentro el campo direccion dentro de la tabla maestra pero tmb tengo que chequear que coincida provincia y localidad
-JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
+CREATE PROCEDURE MigracionCliente
+AS
+BEGIN
+	INSERT INTO [MVM].[Cliente] (dni, nombre, apellido, fecha_nacimiento, direccion_codigo, mail, telefono)
+	SELECT DISTINCT
+		Cliente_Dni,		
+		Cliente_Nombre,				
+		Cliente_Apellido,		
+		Cliente_FechaNacimiento,	
+		Dir.codigo,
+		Cliente_Mail,               
+		Cliente_Telefono
+	FROM gd_esquema.Maestra
+	-- Join con Direccion: tengo que encontrar el registro de la tabla direccion (ya creada) que coincide con los datos del cliente que quiero migrar
+	JOIN [MVM].[Provincia] Prov ON Cliente_Provincia = Prov.nombre
+	JOIN [MVM].[Localidad] Loc ON Cliente_Localidad = Loc.nombre
+	-- Encuentro el campo direccion dentro de la tabla maestra pero tmb tengo que chequear que coincida provincia y localidad
+	JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
+END
+GO
 
 /* Migracion Pedido */
-GO -- SIN UN GO ACA ANTES SE ROMPE. Después se puede sacar
 CREATE PROCEDURE MigracionPedido
 AS
 BEGIN
@@ -978,7 +1001,11 @@ END
 GO
 
 -------------------- Ejecucion Procedures ---------------------------
-
+EXEC MigracionProvincia;
+EXEC MigracionLocalidad;
+EXEC MigracionDireccion;
+EXEC MigracionSucursal;
+EXEC MigracionCliente;
 EXEC MigracionPedido;
 EXEC MigracionDetallePedido;
 EXEC MigracionEstado;
