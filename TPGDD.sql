@@ -1,3 +1,4 @@
+
 ---------------------- Eliminacion Tablas ------------------------------
 
 DROP TABLE IF EXISTS [MVM].[Sillon_Material];
@@ -47,27 +48,29 @@ DROP TABLE IF EXISTS [MVM].[Material];
 -------------------- Creación del esquema ---------------------------
 
 USE [GD1C2025]
+GO
 
 CREATE SCHEMA [MVM]
-
+GO
 
 SET ANSI_NULLS ON
+GO
 SET QUOTED_IDENTIFIER ON
+GO
 
 -------------------- Creación de las tablas ---------------------------
+
 /* Provincia */
 CREATE TABLE [MVM].[Provincia] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[nombre]				[NVARCHAR](255)				
 ) ON [PRIMARY]
 
-
 /* Localidad */
 CREATE TABLE [MVM].[Localidad] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[nombre]				[NVARCHAR](255)				
 ) ON [PRIMARY]
-
 
 /* Direccion */
 CREATE TABLE [MVM].[Direccion] (
@@ -77,7 +80,6 @@ CREATE TABLE [MVM].[Direccion] (
 	[direccion]				[NVARCHAR](255),
 ) ON [PRIMARY]
 
-
 /* Sucursal */
 CREATE TABLE [MVM].[Sucursal] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
@@ -86,7 +88,6 @@ CREATE TABLE [MVM].[Sucursal] (
 	[mail]					[NVARCHAR](255),
 	[telefono]				[NVARCHAR](255)
 ) ON [PRIMARY]
-
 
 /* Cliente */
 CREATE TABLE [MVM].[Cliente] (
@@ -100,7 +101,6 @@ CREATE TABLE [MVM].[Cliente] (
 	[telefono]				[NVARCHAR](255)
 ) ON [PRIMARY]
 
-
 /* Pedido */
 CREATE TABLE [MVM].[Pedido] (
 	[codigo]					[BIGINT] IDENTITY(1,1)	NOT NULL,
@@ -112,7 +112,6 @@ CREATE TABLE [MVM].[Pedido] (
 	/*[estado_actual_codigo]  	[BIGINT] CHEQUEAR SI SE DEJA */
 ) ON [PRIMARY]
 
-
 /* Detalle Pedido */
 CREATE TABLE [MVM].[DetallePedido] (
 	[codigo]					[BIGINT] IDENTITY(1,1)	NOT NULL,
@@ -122,14 +121,12 @@ CREATE TABLE [MVM].[DetallePedido] (
 	[subtotal]					[DECIMAL](18,2)
 ) ON [PRIMARY]
 
-
 /* Estado */
 CREATE TABLE [MVM].[Estado] (
 	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[tipo]		 			[NVARCHAR](255),
 	[pedido_codigo]			[BIGINT]
 ) ON [PRIMARY]
-
 
 /* Pedido Cancelacion */
 CREATE TABLE [MVM].[PedidoCancelacion] (
@@ -138,7 +135,6 @@ CREATE TABLE [MVM].[PedidoCancelacion] (
 	[motivo]	 			[NVARCHAR](255),
 	[pedido_codigo]			[BIGINT]
 ) ON [PRIMARY]
-
 
 /* Medida */
 CREATE TABLE [MVM].[Medida] (
@@ -149,7 +145,6 @@ CREATE TABLE [MVM].[Medida] (
 	[precio]		  		[DECIMAL](18,2)
 ) ON [PRIMARY]
 
-
 /* Modelo */
 CREATE TABLE [MVM].[Modelo] (
 	[codigo]		  [BIGINT]					NOT NULL, -- en este caso no tiene IDENTITY pues el codigo se recupera de la tabla maestra
@@ -157,7 +152,6 @@ CREATE TABLE [MVM].[Modelo] (
 	[descripcion]	  [NVARCHAR](255),
 	[precio_base]	  [DECIMAL](18,2)
 ) ON [PRIMARY]
-
 
 /* Material */
 CREATE TABLE [MVM].[Material] (
@@ -167,13 +161,11 @@ CREATE TABLE [MVM].[Material] (
 	[precio]		  [DECIMAL](18,2)
 ) ON [PRIMARY]
 
-
 /* Relleno */ 
 CREATE TABLE [MVM].[Relleno] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
 	[densidad]		  [DECIMAL](18,2)
 ) ON [PRIMARY]
-
 
 /* Madera */ 
 CREATE TABLE [MVM].[Madera] (
@@ -182,14 +174,12 @@ CREATE TABLE [MVM].[Madera] (
 	[dureza]		  [NVARCHAR](255)
 ) ON [PRIMARY]
 
-
 /* Tela */ 
 CREATE TABLE [MVM].[Tela] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
 	[color]			  [NVARCHAR](255),
 	[textura]		  [NVARCHAR](255)
 ) ON [PRIMARY]
-
 
 /* Sillon */
 CREATE TABLE [MVM].[Sillon] (
@@ -199,12 +189,11 @@ CREATE TABLE [MVM].[Sillon] (
 	[detalle_pedido_codigo] [BIGINT]
 ) ON [PRIMARY]
 
-
 /* Sillon_Material */
 CREATE TABLE [MVM].[Sillon_Material](
     [codigo_sillon]		[BIGINT]				NOT NULL,
     [codigo_material]	[BIGINT]				NOT NULL
-);
+) ON [PRIMARY]
 
 /* Proveedor */
 CREATE TABLE [MVM].[Proveedor] (
@@ -216,7 +205,6 @@ CREATE TABLE [MVM].[Proveedor] (
 	[mail]						[NVARCHAR](255)
 ) ON [PRIMARY]
 
-
 /* Factura */
 CREATE TABLE [MVM].[Factura] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
@@ -227,7 +215,6 @@ CREATE TABLE [MVM].[Factura] (
 	[total]						[DECIMAL](38,2)
 ) ON [PRIMARY]
 
-
 /* Detalle Factura */
 CREATE TABLE [MVM].[DetalleFactura] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
@@ -237,7 +224,6 @@ CREATE TABLE [MVM].[DetalleFactura] (
 	[cantidad]					[DECIMAL](18,0),
 	[subtotal]					[DECIMAL](18,2)
 ) ON [PRIMARY]
-
 
 /* Envio */
 CREATE TABLE [MVM].[Envio] (
@@ -251,7 +237,6 @@ CREATE TABLE [MVM].[Envio] (
 	[importe_subida]			[DECIMAL](18,2)
 ) ON [PRIMARY]
 
-
 /* Compra */
 CREATE TABLE [MVM].[Compra] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
@@ -262,7 +247,6 @@ CREATE TABLE [MVM].[Compra] (
 	[total]						[DECIMAL](18,2)
 ) ON [PRIMARY]
 
-
 /* Detalle Compra */
 CREATE TABLE [MVM].[DetalleCompra] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
@@ -272,9 +256,6 @@ CREATE TABLE [MVM].[DetalleCompra] (
 	[cantidad]					[DECIMAL](18,0),
 	[subtotal]					[DECIMAL](18,2)
 ) ON [PRIMARY]
-
-
-
 
 -------------------- Creación de primary keys ---------------------------
 
@@ -493,7 +474,9 @@ ADD CONSTRAINT PK_Madera PRIMARY KEY (codigo),
 ALTER TABLE [MVM].[Tela]
 ADD CONSTRAINT PK_Tela PRIMARY KEY (codigo),
     CONSTRAINT FK_Tela_Material FOREIGN KEY (codigo) REFERENCES [MVM].[Material](codigo);
+
 --------------------------------- Creación de indices --------------------------------------------------
+
 -- Provincia 
 CREATE INDEX IX_Provincia_Codigo ON [MVM].[Provincia](codigo);
 
@@ -584,9 +567,7 @@ BEGIN
 	SELECT DISTINCT Proveedor_Provincia AS nombre
 	FROM gd_esquema.Maestra
 	WHERE Proveedor_Provincia IS NOT NULL;
-
 END
-
 
 /* Migracion Localidad */
 GO
@@ -610,9 +591,9 @@ BEGIN
 	FROM gd_esquema.Maestra
 	WHERE Cliente_Localidad IS NOT NULL;
 END
-GO
 
 /* Migracion Direccion */
+GO
 CREATE PROCEDURE MigracionDireccion
 AS
 BEGIN
@@ -647,10 +628,10 @@ BEGIN
 	JOIN [MVM].[Provincia] prov ON Sucursal_Provincia = prov.nombre
 	JOIN [MVM].[Localidad] loc ON Sucursal_Localidad = loc.nombre
 	WHERE Sucursal_Direccion IS NOT NULL;
-END 
-GO
+END
 
 /* Migracion Sucursal */
+GO
 CREATE PROCEDURE MigracionSucursal
 AS
 BEGIN
@@ -666,9 +647,9 @@ BEGIN
 	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
 	JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo;
 END
-GO
 
 /* Migracion Cliente */
+GO
 CREATE PROCEDURE MigracionCliente
 AS
 BEGIN
@@ -686,9 +667,9 @@ BEGIN
 	JOIN [MVM].[Localidad] Loc ON Cliente_Localidad = Loc.nombre
 	JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
 END
-GO
 
 /* Migracion Pedido */
+GO
 CREATE PROCEDURE MigracionPedido
 AS
 BEGIN
@@ -706,9 +687,9 @@ INSERT INTO [MVM].[Pedido] (nro_pedido, sucursal_codigo, cliente_codigo, fecha, 
 	AND M.Pedido_Fecha IS NOT NULL
 	AND M.Pedido_Total IS NOT NULL
 END
-GO
 
 /* Migracion Detalle Pedido */
+GO
 CREATE PROCEDURE MigracionDetallePedido
 AS
 BEGIN
@@ -719,9 +700,9 @@ BEGIN
 	AND Detalle_Pedido_Precio IS NOT NULL
 	AND Detalle_Pedido_SubTotal IS NOT NULL
 END
-GO
 
 /* Migracion Estado */
+GO
 CREATE PROCEDURE MigracionEstado
 AS
 BEGIN
@@ -730,7 +711,6 @@ BEGIN
 	FROM gd_esquema.Maestra M
 	JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 END
-GO
 
 /* Actualizacion pedido : Se requiere un Update ya que hay una dependencia circular entre Pedido y estado*/
 /*UPDATE Ped
@@ -741,6 +721,7 @@ JOIN [MVM].[Estado] Est ON Est.nro_pedido = Ped.nro_pedido AND Est.tipo = (
 )  TODO: CHEQUEAR SI SE DEJA*/
 
 /* Migracion Pedido Cancelacion */
+GO
 CREATE PROCEDURE MigracionPedidoCancelacion
 AS
 BEGIN
@@ -752,10 +733,9 @@ BEGIN
 	AND M.Pedido_Cancelacion_Fecha IS NOT NULL
 	AND M.Pedido_Cancelacion_Motivo IS NOT NULL
 END
-GO
 
 /* Migración Medida */
-
+GO
 CREATE PROCEDURE MigracionMedida
 AS
 BEGIN
@@ -766,9 +746,9 @@ BEGIN
 	AND M.Sillon_Medida_Profundidad IS NOT NULL
 	AND M.Sillon_Medida_Precio IS NOT NULL
 END
-GO
 
 /* Migración Modelo */
+GO
 CREATE PROCEDURE MigracionModelo
 AS
 BEGIN
@@ -779,9 +759,9 @@ BEGIN
 	AND M.Sillon_Modelo_Precio IS NOT NULL
 	AND M.Sillon_Modelo_Descripcion IS NOT NULL
 END
-GO
 
 /* Migración Material */
+GO
 CREATE PROCEDURE MigracionMaterial
 AS
 BEGIN
@@ -791,9 +771,9 @@ BEGIN
 	AND M.Material_Precio IS NOT NULL
 	AND M.Material_Descripcion IS NOT NULL
 END
-GO
 
 /* Migración Relleno */ 
+GO
 CREATE PROCEDURE MigracionRelleno
 AS
 BEGIN
@@ -804,9 +784,9 @@ BEGIN
 						  AND Mat.precio = M.Material_Precio
 	WHERE M.Material_Tipo = 'Relleno'
 END
-GO
 
 /* Migración Madera */
+GO
 CREATE PROCEDURE MigracionMadera
 AS
 BEGIN
@@ -817,9 +797,9 @@ BEGIN
 						  AND Mat.precio = M.Material_Precio
 	WHERE Madera_Color IS NOT NULL AND M.Material_Tipo = 'Madera'
 END
-GO
 
 /* Migración Tela */ 
+GO
 CREATE PROCEDURE MigracionTela
 AS
 BEGIN
@@ -830,9 +810,9 @@ BEGIN
 						  AND Mat.precio = M.Material_Precio
 	WHERE M.Material_Tipo = 'Tela'
 END
-GO
 
 /* Migración Sillon */
+GO
 CREATE PROCEDURE MigracionSillon
 AS
 BEGIN
@@ -859,9 +839,9 @@ BEGIN
 							  AND DP.subtotal = M.Detalle_Pedido_SubTotal
 							  AND DP.pedido_codigo = Ped.codigo
 END
-GO
 
 /* Migración Sillon_Material */
+GO
 CREATE PROCEDURE MigracionSillon_Material
 AS
 BEGIN
@@ -880,9 +860,9 @@ BEGIN
 	JOIN [MVM].[Sillon] Sil ON Sil.modelo_codigo = Mo.codigo 
 						AND Sil.medida_codigo = Me.codigo
 END
-GO
 
 /* Migracion Proveedor */
+GO
 CREATE PROCEDURE MigracionProveedor
 AS
 BEGIN
@@ -901,9 +881,9 @@ BEGIN
 									Direc.provincia_codigo = Prov.codigo AND
 									Direc.localidad_codigo = Loc.codigo
 END
-GO
 
 /* Migracion Factura */
+GO
 CREATE PROCEDURE MigracionFactura
 AS
 BEGIN
@@ -931,9 +911,9 @@ BEGIN
 	AND Factura_Fecha IS NOT NULL
 	AND Factura_Total IS NOT NULL
 END
-GO
 
 /* Migracion Detalle Factura */
+GO
 CREATE PROCEDURE MigracionDetalleFactura
 AS
 BEGIN
@@ -964,9 +944,9 @@ BEGIN
 											Detalle_Pedido_SubTotal = DetPedido.subtotal AND
 											Pedido.codigo = DetPedido.pedido_codigo
 END
-GO
 
 /* Migracion Envio */
+GO
 CREATE PROCEDURE MigracionEnvio
 AS
 BEGIN
@@ -998,9 +978,9 @@ BEGIN
 	AND Envio_importeSubida IS NOT NULL
 	AND Envio_ImporteTraslado IS NOT NULL
 END
-GO
 
 /* Migracion Compra */
+GO
 CREATE PROCEDURE MigracionCompra
 AS
 BEGIN
@@ -1024,9 +1004,9 @@ BEGIN
 	JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND 
 									Proveedor_RazonSocial = Proveed.razon_social
 END
-GO
 
 /* Migracion Detalle Compra */
+GO
 CREATE PROCEDURE MigracionDetalleCompra
 AS
 BEGIN
@@ -1054,9 +1034,9 @@ BEGIN
 								Material_Descripcion = Mat.descripcion AND 
 								Material_Precio = Mat.precio
 END
-GO
 
 -------------------- Ejecucion Procedures ---------------------------
+
 EXEC MigracionProvincia;
 EXEC MigracionLocalidad;
 EXEC MigracionDireccion;
