@@ -109,7 +109,7 @@ CREATE TABLE [MVM].[Pedido] (
 	[cliente_codigo]			[BIGINT],
 	[fecha]						[DATETIME2](6),
 	[total]						[DECIMAL](18,2),
-	/*[estado_actual_codigo]  	[BIGINT] CHEQUEAR SI SE DEJA */
+	[estado_actual_codigo]  	[BIGINT] 
 ) ON [PRIMARY]
 
 /* Detalle Pedido */
@@ -694,7 +694,7 @@ CREATE PROCEDURE MigracionDetallePedido
 AS
 BEGIN
 	INSERT INTO [MVM].[DetallePedido] (pedido_codigo, cantidad_sillones, precio_sillon, subtotal)
-	SELECT DISTINCT Ped.codigo, M.Detalle_Pedido_Cantidad, M.Detalle_Pedido_Precio, M.Detalle_Pedido_SubTotal FROM gd_esquema.Maestra M
+	SELECT DISTINCT Ped.codigo, M.Pedido_Numero ,M.Detalle_Pedido_Cantidad, M.Detalle_Pedido_Precio, M.Detalle_Pedido_SubTotal FROM gd_esquema.Maestra M
 	JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 	WHERE Detalle_Pedido_Cantidad IS NOT NULL
 	AND Detalle_Pedido_Precio IS NOT NULL
@@ -713,12 +713,15 @@ BEGIN
 END
 
 /* Actualizacion pedido : Se requiere un Update ya que hay una dependencia circular entre Pedido y estado*/
-/*UPDATE Ped
+GO
+CREATE PROCEDURE ActualizacionEstado
+AS
+BEGIN
+UPDATE Ped
 SET Ped.estado_actual_codigo = Est.codigo
 FROM [MVM].[Pedido] Ped
-JOIN [MVM].[Estado] Est ON Est.nro_pedido = Ped.nro_pedido AND Est.tipo = (
-    SELECT Pedido_Estado FROM gd_esquema.Maestra M2 WHERE M2.Pedido_Numero = Ped.nro_pedido
-)  TODO: CHEQUEAR SI SE DEJA*/
+JOIN [MVM].[Estado] Est ON Est.pedido_codigo = Ped.codigo
+END
 
 /* Migracion Pedido Cancelacion */
 GO
@@ -727,7 +730,6 @@ AS
 BEGIN
 	INSERT INTO [MVM].[PedidoCancelacion] (fecha, motivo, pedido_codigo)
 	SELECT DISTINCT M.Pedido_Cancelacion_Fecha, M.Pedido_Cancelacion_Motivo, Ped.codigo FROM gd_esquema.Maestra M
-	-- join para nro_pedido
 	JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 	WHERE M.Pedido_Estado = 'CANCELADO'
 	AND M.Pedido_Cancelacion_Fecha IS NOT NULL
@@ -841,24 +843,41 @@ BEGIN
 END
 
 /* Migración Sillon_Material */
+
+/* Creacion de tabla temportal */
 GO
 CREATE PROCEDURE MigracionSillon_Material
 AS
 BEGIN
-	INSERT INTO [MVM].[Sillon_Material] (codigo_sillon, codigo_material)
-	SELECT DISTINCT
-		Sil.codigo, Ma.codigo
-	FROM gd_esquema.Maestra M
-	JOIN [MVM].[Modelo] Mo ON Mo.codigo = M.Sillon_Modelo_Codigo
-	JOIN [MVM].[Medida] Me ON Me.alto = M.Sillon_Medida_Alto 
-						AND Me.ancho = M.Sillon_Medida_Ancho
-						AND Me.profundidad = M.Sillon_Medida_Profundidad
-						 AND Me.precio = M.Sillon_Medida_Precio
-	JOIN [MVM].[Material] Ma ON Ma.nombre = M.Material_Nombre
-						AND Ma.descripcion = M.Material_Descripcion
-						AND Ma.precio = M.Material_Precio
-	JOIN [MVM].[Sillon] Sil ON Sil.modelo_codigo = Mo.codigo 
-						AND Sil.medida_codigo = Me.codigo
+CREATE TABLE #Combinaciones_Sillon_Material (
+    codigo_sillon BIGINT,
+    codigo_material BIGINT
+);
+
+INSERT INTO #Combinaciones_Sillon_Material (codigo_sillon, codigo_material)
+SELECT DISTINCT
+    Sil.codigo AS codigo_sillon,
+    Ma.codigo AS codigo_material
+FROM gd_esquema.Maestra M
+JOIN [MVM].[Modelo] Mo ON Mo.codigo = M.Sillon_Modelo_Codigo
+JOIN [MVM].[Medida] Me ON Me.alto = M.Sillon_Medida_Alto 
+                       AND Me.ancho = M.Sillon_Medida_Ancho
+                       AND Me.profundidad = M.Sillon_Medida_Profundidad
+                       AND Me.precio = M.Sillon_Medida_Precio
+JOIN [MVM].[Material] Ma ON Ma.nombre = M.Material_Nombre
+                         AND Ma.descripcion = M.Material_Descripcion
+                         AND Ma.precio = M.Material_Precio
+JOIN [MVM].[Sillon] Sil ON Sil.modelo_codigo = Mo.codigo 
+                         AND Sil.medida_codigo = Me.codigo;
+
+/*Migracion a tabla original */
+
+INSERT INTO [MVM].[Sillon_Material] (codigo_sillon, codigo_material)
+SELECT C.codigo_sillon, C.codigo_material
+FROM #Combinaciones_Sillon_Material C
+LEFT JOIN [MVM].[Sillon_Material] SM 
+    ON SM.codigo_sillon = C.codigo_sillon AND SM.codigo_material = C.codigo_material
+WHERE SM.codigo_sillon IS NULL;
 END
 
 /* Migracion Proveedor */
@@ -1045,6 +1064,7 @@ EXEC MigracionCliente;
 EXEC MigracionPedido;
 EXEC MigracionDetallePedido;
 EXEC MigracionEstado;
+EXEC ActualizacionEstado;
 EXEC MigracionPedidoCancelacion;
 EXEC MigracionMedida;
 EXEC MigracionModelo;
