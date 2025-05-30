@@ -844,7 +844,7 @@ END
 
 /* Migración Sillon_Material */
 
-/* Creacion de tabla temportal */
+/* Creacion de tabla temporal */
 GO
 CREATE PROCEDURE MigracionSillon_Material
 AS
