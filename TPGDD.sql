@@ -645,7 +645,10 @@ BEGIN
 	-- Join para Direccion
 	JOIN [MVM].[Provincia] Prov ON Sucursal_Provincia = Prov.nombre
 	JOIN [MVM].[Localidad] Loc ON Sucursal_Localidad = Loc.nombre
-	JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo;
+	JOIN [MVM].[Direccion] Dir ON Sucursal_Direccion = Dir.direccion 
+		AND Dir.localidad_codigo = Loc.codigo 
+		AND Dir.provincia_codigo = Prov.codigo
+	WHERE Sucursal_NroSucursal IS NOT NULL;
 END
 
 /* Migracion Cliente */
@@ -665,7 +668,11 @@ BEGIN
 	FROM gd_esquema.Maestra
 	JOIN [MVM].[Provincia] Prov ON Cliente_Provincia = Prov.nombre
 	JOIN [MVM].[Localidad] Loc ON Cliente_Localidad = Loc.nombre
-	JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion AND Dir.localidad_codigo = Loc.codigo AND Dir.provincia_codigo = Prov.codigo
+	JOIN [MVM].[Direccion] Dir ON Cliente_Direccion = Dir.direccion 
+		AND Dir.localidad_codigo = Loc.codigo 
+		AND Dir.provincia_codigo = Prov.codigo
+	WHERE Cliente_Dni IS NOT NULL
+	AND Cliente_Nombre IS NOT NULL;
 END
 
 /* Migracion Pedido */
@@ -899,6 +906,8 @@ BEGIN
 	JOIN [MVM].[Direccion] Direc ON Proveedor_Direccion = Direc.direccion AND
 									Direc.provincia_codigo = Prov.codigo AND
 									Direc.localidad_codigo = Loc.codigo
+	WHERE Proveedor_Cuit IS NOT NULL
+	AND Proveedor_RazonSocial IS NOT NULL;
 END
 
 /* Migracion Factura */
@@ -991,11 +1000,6 @@ BEGIN
 								Suc.codigo = Fact.sucursal_codigo AND
 								Factura_Fecha = Fact.fecha_hora
 	WHERE Envio_Numero IS NOT NULL 
-	AND Envio_Fecha IS NOT NULL
-	AND Envio_Fecha_Programada IS NOT NULL
-	AND Envio_Total IS NOT NULL
-	AND Envio_importeSubida IS NOT NULL
-	AND Envio_ImporteTraslado IS NOT NULL
 END
 
 /* Migracion Compra */
@@ -1022,6 +1026,7 @@ BEGIN
 	-- join para proveedor_codigo --
 	JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND 
 									Proveedor_RazonSocial = Proveed.razon_social
+	WHERE Compra_Numero IS NOT NULL;
 END
 
 /* Migracion Detalle Compra */
