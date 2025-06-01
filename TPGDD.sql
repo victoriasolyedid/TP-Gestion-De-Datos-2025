@@ -1,52 +1,3 @@
-
----------------------- Eliminacion Tablas ------------------------------
-
-DROP TABLE IF EXISTS [MVM].[Sillon_Material];
-
--- Tablas hijas de Sillon
-DROP TABLE IF EXISTS [MVM].[Relleno];
-DROP TABLE IF EXISTS [MVM].[Madera];
-DROP TABLE IF EXISTS [MVM].[Tela];
-
--- Tablas que dependen de DetallePedido
-DROP TABLE IF EXISTS [MVM].[Sillon];
-DROP TABLE IF EXISTS [MVM].[DetalleFactura];
-
--- Tablas hijas de Factura
-DROP TABLE IF EXISTS [MVM].[Envio];
-
--- Luego las entidades intermedias
-DROP TABLE IF EXISTS [MVM].[Factura];
-
--- Tablas hijas de Pedido
-DROP TABLE IF EXISTS [MVM].[DetallePedido];
-DROP TABLE IF EXISTS [MVM].[Estado];
-DROP TABLE IF EXISTS [MVM].[PedidoCancelacion];
-
--- Pedido (requiere eliminación de sus hijas primero)
-DROP TABLE IF EXISTS [MVM].[Pedido];
-
--- Tablas hijas de Compra
-DROP TABLE IF EXISTS [MVM].[DetalleCompra];
-
--- Compra
-DROP TABLE IF EXISTS [MVM].[Compra];
-
--- Tablas base intermedias
-DROP TABLE IF EXISTS [MVM].[Proveedor];
-DROP TABLE IF EXISTS [MVM].[Cliente];
-DROP TABLE IF EXISTS [MVM].[Sucursal];
-DROP TABLE IF EXISTS [MVM].[Direccion];
-DROP TABLE IF EXISTS [MVM].[Localidad];
-DROP TABLE IF EXISTS [MVM].[Provincia];
-
--- Tablas de catálogo o usadas por sillones
-DROP TABLE IF EXISTS [MVM].[Modelo];
-DROP TABLE IF EXISTS [MVM].[Medida];
-DROP TABLE IF EXISTS [MVM].[Material];
-
--------------------- Creación del esquema ---------------------------
-
 USE [GD1C2025]
 GO
 
@@ -63,28 +14,28 @@ GO
 /* Provincia */
 CREATE TABLE [MVM].[Provincia] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[nombre]				[NVARCHAR](255)				
+	[nombre]				[NVARCHAR](255)	NOT NULL			
 ) ON [PRIMARY]
 
 /* Localidad */
 CREATE TABLE [MVM].[Localidad] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[nombre]				[NVARCHAR](255)				
+	[nombre]				[NVARCHAR](255)	NOT NULL			
 ) ON [PRIMARY]
 
 /* Direccion */
 CREATE TABLE [MVM].[Direccion] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, -- PK
-	[provincia_codigo]			[BIGINT],						 -- FK
-	[localidad_codigo]			[BIGINT],						 -- FK
-	[direccion]				[NVARCHAR](255),
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL, -- PK
+	[provincia_codigo]			[BIGINT] ,
+	[localidad_codigo]			[BIGINT] ,
+	[direccion]					[NVARCHAR](255) NOT NULL
 ) ON [PRIMARY]
 
 /* Sucursal */
 CREATE TABLE [MVM].[Sucursal] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[nro_sucursal]				[BIGINT],
-	[direccion_codigo]			[BIGINT],						
+	[nro_sucursal]				[BIGINT] NOT NULL,
+	[direccion_codigo]			[BIGINT] ,					
 	[mail]					[NVARCHAR](255),
 	[telefono]				[NVARCHAR](255)
 ) ON [PRIMARY]
@@ -92,10 +43,10 @@ CREATE TABLE [MVM].[Sucursal] (
 /* Cliente */
 CREATE TABLE [MVM].[Cliente] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
-	[dni]					[BIGINT],
-	[nombre]				[NVARCHAR](255),
-	[apellido]				[NVARCHAR](255),
-	[fecha_nacimiento]			[DATETIME2](6),
+	[dni]					[BIGINT] NOT NULL,
+	[nombre]				[NVARCHAR](255) NOT NULL,
+	[apellido]				[NVARCHAR](255) NOT NULL,
+	[fecha_nacimiento]			[DATETIME2](6) NOT NULL,
 	[direccion_codigo]			[BIGINT],
 	[mail]					[NVARCHAR](255),
 	[telefono]				[NVARCHAR](255)
@@ -104,89 +55,89 @@ CREATE TABLE [MVM].[Cliente] (
 /* Pedido */
 CREATE TABLE [MVM].[Pedido] (
 	[codigo]					[BIGINT] IDENTITY(1,1)	NOT NULL,
-	[nro_pedido]				[DECIMAL](18,2),
-	[sucursal_codigo]			[BIGINT],
-	[cliente_codigo]			[BIGINT],
-	[fecha]						[DATETIME2](6),
-	[total]						[DECIMAL](18,2),
-	[estado_actual_codigo]  	[BIGINT] 
+	[nro_pedido]				[DECIMAL](18,2) NOT NULL,
+	[sucursal_codigo]			[BIGINT] ,
+	[cliente_codigo]			[BIGINT] ,
+	[fecha]						[DATETIME2](6) NOT NULL,
+	[total]						[DECIMAL](18,2) NOT NULL,
+	[estado_actual_codigo]  	[BIGINT]  
 ) ON [PRIMARY]
 
 /* Detalle Pedido */
 CREATE TABLE [MVM].[DetallePedido] (
 	[codigo]					[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[pedido_codigo]				[BIGINT],
-	[cantidad_sillones]			[BIGINT],
-	[precio_sillon]				[DECIMAL](18,2),
-	[subtotal]					[DECIMAL](18,2)
+	[cantidad_sillones]			[BIGINT] NOT NULL,
+	[precio_sillon]				[DECIMAL](18,2) NOT NULL,
+	[subtotal]					[DECIMAL](18,2) NOT NULL
 ) ON [PRIMARY]
 
 /* Estado */
 CREATE TABLE [MVM].[Estado] (
 	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
-	[tipo]		 			[NVARCHAR](255),
-	[pedido_codigo]			[BIGINT]
+	[tipo]		 			[NVARCHAR](255) NOT NULL,
+	[pedido_codigo]			[BIGINT] 
 ) ON [PRIMARY]
 
 /* Pedido Cancelacion */
 CREATE TABLE [MVM].[PedidoCancelacion] (
 	[codigo]	 			[BIGINT] IDENTITY(1,1)	NOT NULL,
-	[fecha]		 			[DATETIME2](6),
-	[motivo]	 			[NVARCHAR](255),
-	[pedido_codigo]			[BIGINT]
+	[fecha]		 			[DATETIME2](6) NOT NULL,
+	[motivo]	 			[NVARCHAR](255) NOT NULL,
+	[pedido_codigo]			[BIGINT] 
 ) ON [PRIMARY]
 
 /* Medida */
 CREATE TABLE [MVM].[Medida] (
 	[codigo]		  		[BIGINT] IDENTITY(1,1)	NOT NULL,
 	[alto]			  		[DECIMAL](18,2),
-	[ancho]			  		[DECIMAL](18,2),
-	[profundidad]	  		[DECIMAL](18,2),
-	[precio]		  		[DECIMAL](18,2)
+	[ancho]			  		[DECIMAL](18,2) ,
+	[profundidad]	  		[DECIMAL](18,2) ,
+	[precio]		  		[DECIMAL](18,2) 
 ) ON [PRIMARY]
 
 /* Modelo */
 CREATE TABLE [MVM].[Modelo] (
 	[codigo]		  [BIGINT]					NOT NULL, -- en este caso no tiene IDENTITY pues el codigo se recupera de la tabla maestra
-	[modelo]		  [NVARCHAR](255),
-	[descripcion]	  [NVARCHAR](255),
-	[precio_base]	  [DECIMAL](18,2)
+	[modelo]		  [NVARCHAR](255) NOT NULL,
+	[descripcion]	  [NVARCHAR](255) NOT NULL,
+	[precio_base]	  [DECIMAL](18,2) NOT NULL
 ) ON [PRIMARY]
 
 /* Material */
 CREATE TABLE [MVM].[Material] (
 	[codigo]		  [BIGINT] IDENTITY(1,1)	NOT NULL,
-	[nombre]		  [NVARCHAR](255),
-	[descripcion]	  [NVARCHAR](255),
-	[precio]		  [DECIMAL](18,2)
+	[nombre]		  [NVARCHAR](255) NOT NULL,
+	[descripcion]	  [NVARCHAR](255) NOT NULL,
+	[precio]		  [DECIMAL](18,2) NOT NULL
 ) ON [PRIMARY]
 
 /* Relleno */ 
 CREATE TABLE [MVM].[Relleno] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
-	[densidad]		  [DECIMAL](18,2)
+	[densidad]		  [DECIMAL](18,2)			NOT NULL
 ) ON [PRIMARY]
 
 /* Madera */ 
 CREATE TABLE [MVM].[Madera] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
-	[color]			  [NVARCHAR](255),
-	[dureza]		  [NVARCHAR](255)
+	[color]			  [NVARCHAR](255)			NOT NULL,
+	[dureza]		  [NVARCHAR](255)			NOT NULL
 ) ON [PRIMARY]
 
 /* Tela */ 
 CREATE TABLE [MVM].[Tela] (
 	[codigo]		  [BIGINT]					NOT NULL, --Es pk y fk al mismo tiempo, no lleva identity
-	[color]			  [NVARCHAR](255),
-	[textura]		  [NVARCHAR](255)
+	[color]			  [NVARCHAR](255)			NOT NULL,
+	[textura]		  [NVARCHAR](255)			NOT NULL
 ) ON [PRIMARY]
 
 /* Sillon */
 CREATE TABLE [MVM].[Sillon] (
 	[codigo]				[BIGINT] IDENTITY(1,1)	NOT NULL,
-	[modelo_codigo]			[BIGINT],
-	[medida_codigo]			[BIGINT],
-	[detalle_pedido_codigo] [BIGINT]
+	[modelo_codigo]			[BIGINT]				,
+	[medida_codigo]			[BIGINT]				,
+	[detalle_pedido_codigo] [BIGINT]				
 ) ON [PRIMARY]
 
 /* Sillon_Material */
@@ -198,9 +149,9 @@ CREATE TABLE [MVM].[Sillon_Material](
 /* Proveedor */
 CREATE TABLE [MVM].[Proveedor] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[direccion_codigo]			[BIGINT],
-	[razon_social]				[NVARCHAR](255),
-	[cuit]						[NVARCHAR](255),
+	[direccion_codigo]			[BIGINT] ,
+	[razon_social]				[NVARCHAR](255) NOT NULL,
+	[cuit]						[NVARCHAR](255) NOT NULL,
 	[telefono]					[NVARCHAR](255),
 	[mail]						[NVARCHAR](255)
 ) ON [PRIMARY]
@@ -208,31 +159,31 @@ CREATE TABLE [MVM].[Proveedor] (
 /* Factura */
 CREATE TABLE [MVM].[Factura] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[nro_factura]				[BIGINT],
-	[sucursal_codigo]			[BIGINT],
-	[cliente_codigo]			[BIGINT],
-	[fecha_hora]				[DATETIME2](6),
-	[total]						[DECIMAL](38,2)
+	[nro_factura]				[BIGINT] NOT NULL,
+	[sucursal_codigo]			[BIGINT] ,
+	[cliente_codigo]			[BIGINT] ,
+	[fecha_hora]				[DATETIME2](6) ,
+	[total]						[DECIMAL](38,2)  NOT NULL
 ) ON [PRIMARY]
 
 /* Detalle Factura */
 CREATE TABLE [MVM].[DetalleFactura] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[factura_codigo]			[BIGINT],
-	[detalle_pedido_codigo]		[BIGINT],
-	[precio_unitario]			[DECIMAL](18,2),
-	[cantidad]					[DECIMAL](18,0),
-	[subtotal]					[DECIMAL](18,2)
+	[factura_codigo]			[BIGINT] ,
+	[detalle_pedido_codigo]		[BIGINT] ,
+	[precio_unitario]			[DECIMAL](18,2) ,
+	[cantidad]					[DECIMAL](18,0) ,
+	[subtotal]					[DECIMAL](18,2) NOT NULL
 ) ON [PRIMARY]
 
 /* Envio */
 CREATE TABLE [MVM].[Envio] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[nro_envio]					[DECIMAL](18,0),
-	[factura_codigo]			[BIGINT],
+	[nro_envio]					[DECIMAL](18,0) NOT NULL,
+	[factura_codigo]			[BIGINT] ,
 	[fecha_programada]			[DATETIME2](6),
 	[fecha_entrega]				[DATETIME2](6),
-	[total]						[DECIMAL](18,2),
+	[total]						[DECIMAL](18,2) NOT NULL,
 	[importe_traslado]			[DECIMAL](18,2),
 	[importe_subida]			[DECIMAL](18,2)
 ) ON [PRIMARY]
@@ -240,11 +191,11 @@ CREATE TABLE [MVM].[Envio] (
 /* Compra */
 CREATE TABLE [MVM].[Compra] (
 	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
-	[nro_compra]				[DECIMAL](18,0),
+	[nro_compra]				[DECIMAL](18,0) NOT NULL,
 	[sucursal_codigo]			[BIGINT],
-	[proveedor_codigo]			[BIGINT],
-	[fecha]						[DATETIME2](6),
-	[total]						[DECIMAL](18,2)
+	[proveedor_codigo]			[BIGINT] , 
+	[fecha]						[DATETIME2](6) NOT NULL,
+	[total]						[DECIMAL](18,2) NOT NULL
 ) ON [PRIMARY]
 
 /* Detalle Compra */
@@ -672,7 +623,9 @@ BEGIN
 		AND Dir.localidad_codigo = Loc.codigo 
 		AND Dir.provincia_codigo = Prov.codigo
 	WHERE Cliente_Dni IS NOT NULL
-	AND Cliente_Nombre IS NOT NULL;
+	AND Cliente_Nombre IS NOT NULL
+	AND Cliente_Apellido IS NOT NULL
+	AND Cliente_FechaNacimiento IS NOT NULL
 END
 
 /* Migracion Pedido */
@@ -701,7 +654,7 @@ CREATE PROCEDURE MigracionDetallePedido
 AS
 BEGIN
 	INSERT INTO [MVM].[DetallePedido] (pedido_codigo, cantidad_sillones, precio_sillon, subtotal)
-	SELECT DISTINCT Ped.codigo, M.Pedido_Numero ,M.Detalle_Pedido_Cantidad, M.Detalle_Pedido_Precio, M.Detalle_Pedido_SubTotal FROM gd_esquema.Maestra M
+	SELECT DISTINCT Ped.codigo,M.Detalle_Pedido_Cantidad, M.Detalle_Pedido_Precio, M.Detalle_Pedido_SubTotal FROM gd_esquema.Maestra M
 	JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
 	WHERE Detalle_Pedido_Cantidad IS NOT NULL
 	AND Detalle_Pedido_Precio IS NOT NULL
@@ -717,6 +670,7 @@ BEGIN
 	SELECT DISTINCT Pedido_Estado, Ped.codigo
 	FROM gd_esquema.Maestra M
 	JOIN [MVM].[Pedido] Ped ON Ped.nro_pedido = M.Pedido_Numero
+	WHERE M.Pedido_Estado IS NOT NULL;
 END
 
 /* Actualizacion pedido : Se requiere un Update ya que hay una dependencia circular entre Pedido y estado*/
@@ -792,6 +746,7 @@ BEGIN
 						  AND Mat.descripcion = M.Material_Descripcion
 						  AND Mat.precio = M.Material_Precio
 	WHERE M.Material_Tipo = 'Relleno'
+	AND M.Relleno_Densidad IS NOT NULL
 END
 
 /* Migración Madera */
@@ -804,7 +759,9 @@ BEGIN
 	JOIN [MVM].[Material] Mat ON Mat.nombre = M.Material_Nombre
 						  AND Mat.descripcion = M.Material_Descripcion
 						  AND Mat.precio = M.Material_Precio
-	WHERE Madera_Color IS NOT NULL AND M.Material_Tipo = 'Madera'
+	WHERE M.Madera_Color IS NOT NULL
+	AND M.Madera_Dureza IS NOT NULL
+	AND M.Material_Tipo = 'Madera'
 END
 
 /* Migración Tela */ 
@@ -818,6 +775,8 @@ BEGIN
 						  AND Mat.descripcion = M.Material_Descripcion
 						  AND Mat.precio = M.Material_Precio
 	WHERE M.Material_Tipo = 'Tela'
+	AND M.Tela_Color IS NOT NULL
+	AND M.Tela_Textura IS NOT NULL
 END
 
 /* Migración Sillon */
@@ -850,8 +809,6 @@ BEGIN
 END
 
 /* Migración Sillon_Material */
-
-/* Creacion de tabla temporal */
 GO
 CREATE PROCEDURE MigracionSillon_Material
 AS
@@ -935,8 +892,7 @@ BEGIN
 	JOIN [MVM].[Cliente] Clie ON Cliente_Dni = Clie.dni AND
 								Cliente_Nombre = Clie.nombre AND
 								Cliente_Apellido = Clie.apellido
-	WHERE Factura_Numero IS NOT NULL 
-	AND Factura_Fecha IS NOT NULL
+	WHERE Factura_Numero IS NOT NULL  
 	AND Factura_Total IS NOT NULL
 END
 
@@ -971,6 +927,7 @@ BEGIN
 	JOIN [MVM].[DetallePedido] DetPedido ON Detalle_Pedido_Cantidad = DetPedido.cantidad_sillones AND 
 											Detalle_Pedido_SubTotal = DetPedido.subtotal AND
 											Pedido.codigo = DetPedido.pedido_codigo
+	WHERE Detalle_Factura_SubTotal IS NOT NULL
 END
 
 /* Migracion Envio */
@@ -999,7 +956,8 @@ BEGIN
 	JOIN [MVM].[Factura] Fact ON Factura_Numero = Fact.nro_factura AND
 								Suc.codigo = Fact.sucursal_codigo AND
 								Factura_Fecha = Fact.fecha_hora
-	WHERE Envio_Numero IS NOT NULL 
+	WHERE Envio_Numero IS NOT NULL
+	AND Envio_Total IS NOT NULL
 END
 
 /* Migracion Compra */
@@ -1026,7 +984,9 @@ BEGIN
 	-- join para proveedor_codigo --
 	JOIN [MVM].[Proveedor] Proveed ON Proveedor_Cuit = Proveed.cuit AND 
 									Proveedor_RazonSocial = Proveed.razon_social
-	WHERE Compra_Numero IS NOT NULL;
+	WHERE Compra_Numero IS NOT NULL
+	AND Compra_Fecha IS NOT NULL
+	AND Compra_Total IS NOT NULL;
 END
 
 /* Migracion Detalle Compra */
@@ -1057,6 +1017,9 @@ BEGIN
 	JOIN [MVM].[Material] Mat ON Material_Nombre = Mat.nombre AND
 								Material_Descripcion = Mat.descripcion AND 
 								Material_Precio = Mat.precio
+	WHERE Detalle_Compra_Precio IS NOT NULL
+	AND Detalle_Compra_Cantidad IS NOT NULL
+	AND Detalle_Compra_SubTotal IS NOT NULL
 END
 
 -------------------- Ejecucion Procedures ---------------------------
@@ -1085,3 +1048,52 @@ EXEC MigracionDetalleFactura;
 EXEC MigracionEnvio;
 EXEC MigracionCompra;
 EXEC MigracionDetalleCompra;
+
+
+---------------------- Eliminacion Tablas ------------------------------
+
+DROP SCHEMA MVM;
+
+DROP TABLE IF EXISTS [MVM].[Sillon_Material];
+
+-- Tablas hijas de Sillon
+DROP TABLE IF EXISTS [MVM].[Relleno];
+DROP TABLE IF EXISTS [MVM].[Madera];
+DROP TABLE IF EXISTS [MVM].[Tela];
+
+-- Tablas que dependen de DetallePedido
+DROP TABLE IF EXISTS [MVM].[Sillon];
+DROP TABLE IF EXISTS [MVM].[DetalleFactura];
+
+-- Tablas hijas de Factura
+DROP TABLE IF EXISTS [MVM].[Envio];
+
+-- Luego las entidades intermedias
+DROP TABLE IF EXISTS [MVM].[Factura];
+
+-- Tablas hijas de Pedido
+DROP TABLE IF EXISTS [MVM].[DetallePedido];
+DROP TABLE IF EXISTS [MVM].[Estado];
+DROP TABLE IF EXISTS [MVM].[PedidoCancelacion];
+
+-- Pedido (requiere eliminación de sus hijas primero)
+DROP TABLE IF EXISTS [MVM].[Pedido];
+
+-- Tablas hijas de Compra
+DROP TABLE IF EXISTS [MVM].[DetalleCompra];
+
+-- Compra
+DROP TABLE IF EXISTS [MVM].[Compra];
+
+-- Tablas base intermedias
+DROP TABLE IF EXISTS [MVM].[Proveedor];
+DROP TABLE IF EXISTS [MVM].[Cliente];
+DROP TABLE IF EXISTS [MVM].[Sucursal];
+DROP TABLE IF EXISTS [MVM].[Direccion];
+DROP TABLE IF EXISTS [MVM].[Localidad];
+DROP TABLE IF EXISTS [MVM].[Provincia];
+
+-- Tablas de catálogo o usadas por sillones
+DROP TABLE IF EXISTS [MVM].[Modelo];
+DROP TABLE IF EXISTS [MVM].[Medida];
+DROP TABLE IF EXISTS [MVM].[Material];
