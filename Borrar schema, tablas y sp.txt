@@ -1,0 +1,68 @@
+
+
+GO
+CREATE OR ALTER PROCEDURE DropTablasYProcedures_MVM
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ---------------------- Eliminación de Procedures ----------------------
+    DECLARE @sp NVARCHAR(100);
+    DECLARE @sql NVARCHAR(MAX);
+
+    DECLARE drop_procedures CURSOR FOR
+    SELECT name FROM sys.procedures
+    WHERE name IN (
+        'MigracionProvincia', 'MigracionLocalidad', 'MigracionDireccion', 'MigracionSucursal',
+        'MigracionCliente', 'MigracionPedido', 'MigracionDetallePedido', 'MigracionEstado',
+        'ActualizacionEstado', 'MigracionPedidoCancelacion', 'MigracionMedida', 'MigracionModelo',
+        'MigracionMaterial', 'MigracionRelleno', 'MigracionMadera', 'MigracionTela',
+        'MigracionSillon', 'MigracionProveedor', 'MigracionFactura', 'MigracionDetalleFactura',
+        'MigracionEnvio', 'MigracionCompra', 'MigracionDetalleCompra', 'MigracionSillon_Material'
+    );
+
+    OPEN drop_procedures;
+    FETCH NEXT FROM drop_procedures INTO @sp;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @sql = 'DROP PROCEDURE IF EXISTS [' + @sp + ']';
+        EXEC sp_executesql @sql;
+
+        FETCH NEXT FROM drop_procedures INTO @sp;
+    END
+
+    CLOSE drop_procedures;
+    DEALLOCATE drop_procedures;
+
+    ---------------------- Eliminación de Tablas ----------------------
+
+    DROP TABLE IF EXISTS [MVM].[Sillon_Material];
+    DROP TABLE IF EXISTS [MVM].[Relleno];
+    DROP TABLE IF EXISTS [MVM].[Madera];
+    DROP TABLE IF EXISTS [MVM].[Tela];
+    DROP TABLE IF EXISTS [MVM].[Sillon];
+    DROP TABLE IF EXISTS [MVM].[DetalleFactura];
+    DROP TABLE IF EXISTS [MVM].[Envio];
+    DROP TABLE IF EXISTS [MVM].[Factura];
+    DROP TABLE IF EXISTS [MVM].[DetallePedido];
+    DROP TABLE IF EXISTS [MVM].[Estado];
+    DROP TABLE IF EXISTS [MVM].[PedidoCancelacion];
+    DROP TABLE IF EXISTS [MVM].[Pedido];
+    DROP TABLE IF EXISTS [MVM].[DetalleCompra];
+    DROP TABLE IF EXISTS [MVM].[Compra];
+    DROP TABLE IF EXISTS [MVM].[Proveedor];
+    DROP TABLE IF EXISTS [MVM].[Cliente];
+    DROP TABLE IF EXISTS [MVM].[Sucursal];
+    DROP TABLE IF EXISTS [MVM].[Direccion];
+    DROP TABLE IF EXISTS [MVM].[Localidad];
+    DROP TABLE IF EXISTS [MVM].[Provincia];
+    DROP TABLE IF EXISTS [MVM].[Modelo];
+    DROP TABLE IF EXISTS [MVM].[Medida];
+    DROP TABLE IF EXISTS [MVM].[Material];
+
+    ---------------------- Eliminación del Schema ----------------------
+    DROP SCHEMA IF EXISTS MVM;
+END;
+
+EXEC DropTablasYProcedures_MVM;
