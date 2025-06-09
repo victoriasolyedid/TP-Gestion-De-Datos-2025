@@ -2,11 +2,11 @@
 ---------------------- Eliminacion Tablas ------------------------------
 
 ------------------------------------------------------------------------
+BEGIN TRANSACTION;
 
 USE [GD1C2025]
 GO
-
--------------------- Creaci髇 de las tablas ---------------------------
+---------------- Creaci贸n de las tablas ---------------------------
 
 /* Dimension_Ubicacion */
 CREATE TABLE [MVM].[BI_D_Ubicacion] (
@@ -39,7 +39,39 @@ CREATE TABLE [MVM].[BI_H_Compra] (
 	[total_compra]			[DECIMAL](18)
 ) ON [PRIMARY]
 
--------------------- Creaci髇 de primary keys -------------------------
+/* Dimension_Modelo */
+CREATE TABLE [MVM].[BI_D_Modelo] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[nombre_modelo]			[NVARCHAR](255),
+	[precio_base]			[DECIMAL](18,2),
+) ON [PRIMARY]
+
+/* Dimension_Turno */
+CREATE TABLE [MVM].[BI_D_Turno] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[turno_inicio]			[SMALLINT],
+	[turno_fin]				[SMALLINT],
+) ON [PRIMARY]
+
+/* Dimension_Estado */
+CREATE TABLE [MVM].[BI_D_Estado] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[tipo]					[NVARCHAR](255),
+) ON [PRIMARY]
+
+/* Hechos_Pedido */
+CREATE TABLE [MVM].[BI_H_Pedido] (
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[turno_codigo]			[BIGINT],
+	[sucursal_codigo]		[BIGINT],
+	[estado_codigo]			[BIGINT],
+	[tiempo_codigo]			[BIGINT],
+	[total_pedido]			[DECIMAL](18,2),
+	[tiempo_facturacion]	[SMALLINT],
+	[cantidad_sillones]		[SMALLINT]
+) ON [PRIMARY]
+
+-------------------- Creaci贸n de primary keys -------------------------
 
 /* Dimension_Ubicacion */
 ALTER TABLE [MVM].[BI_D_Ubicacion]
@@ -57,7 +89,23 @@ ADD CONSTRAINT PK_D_Rango_Etario PRIMARY KEY (codigo);
 ALTER TABLE [MVM].[BI_H_Compra]
 ADD CONSTRAINT PK_H_Compra PRIMARY KEY (codigo);
 
--------------------- Creaci髇 de foreign keys -------------------------
+/* Dimension_Modelo */
+ALTER TABLE [MVM].[BI_D_Modelo]
+ADD CONSTRAINT PK_D_Modelo PRIMARY KEY (codigo);
+
+/* Dimension_Turno */
+ALTER TABLE [MVM].[BI_D_Turno]
+ADD CONSTRAINT PK_D_Turno PRIMARY KEY (codigo);
+
+/* Dimension_Estado */
+ALTER TABLE [MVM].[BI_D_Estado]
+ADD CONSTRAINT PK_D_Estado PRIMARY KEY (codigo);
+
+/* Hechos_Pedido */
+ALTER TABLE [MVM].[BI_H_Pedido]
+ADD CONSTRAINT PK_H_Pedido PRIMARY KEY (codigo);
+
+-------------------- Creaci贸n de foreign keys -------------------------
 
 /* Hechos_Compra */
 ALTER TABLE [MVM].[BI_H_Compra]
@@ -72,8 +120,29 @@ ALTER TABLE [MVM].[BI_H_Compra]
 ADD CONSTRAINT FK_Compra_Tipo_Material
 FOREIGN KEY (tipo_material_codigo) REFERENCES [MVM].[BI_D_Tipo_Material](codigo);
 
------------------------ Creaci髇 de indices ---------------------------
+/* Hechos_Pedido */
+ALTER TABLE [MVM].[BI_H_Pedido]
+ADD CONSTRAINT FK_Pedido_Turno
+FOREIGN KEY (turno_codigo) REFERENCES [MVM].[BI_D_Turno](codigo);
 
------------------------ Migraci髇 de tablas ---------------------------
+ALTER TABLE [MVM].[BI_H_Pedido]
+ADD CONSTRAINT FK_Pedido_Sucursal
+FOREIGN KEY (sucursal_codigo) REFERENCES [MVM].[BI_D_Sucursal](codigo);
+
+ALTER TABLE [MVM].[BI_H_Pedido]
+ADD CONSTRAINT FK_Pedido_Estado
+FOREIGN KEY (estado_codigo) REFERENCES [MVM].[BI_D_Estado](codigo);
+
+ALTER TABLE [MVM].[BI_H_Pedido]
+ADD CONSTRAINT FK_Pedido_Tiempo
+FOREIGN KEY (tiempo_codigo) REFERENCES [MVM].[BI_D_Tiempo](codigo);
+
+----------------------- Creaci贸n de indices ---------------------------
+PRINT 'Tablas, 铆ndices y constraints creados exitosamente.'
+
+COMMIT TRANSACTION;
+
+
+----------------------- Migraci贸n de tablas ---------------------------
 
 ---------------------- Ejecucion Procedures ---------------------------
