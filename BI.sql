@@ -49,9 +49,7 @@ CREATE TABLE [MVM].[BI_H_Compra] (
 	[tiempo_codigo]			[BIGINT],
 	[sucursal_codigo]		[BIGINT],
 	[tipo_material_codigo]	[BIGINT],
-	[cantidad]				[DECIMAL](18),
-	[precio_unitario]		[DECIMAL](18),
-	[total_compra]			[DECIMAL](18)
+	[subtotal_material]			[DECIMAL](18)
 ) ON [PRIMARY]
 
 /* Dimension_Modelo */
@@ -351,12 +349,10 @@ GO
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_COMPRA
 AS
 BEGIN
-	INSERT INTO MVM.[BI_H_Compra](cantidad, precio_unitario, total_compra)
-	(SELECT DISTINCT e.tipo FROM [MVM].[Estado] e)
+	INSERT INTO MVM.[BI_H_Compra](subtotal_material)
+	(SELECT dc.subtotal FROM [MVM].[DetalleCompra] dc)
 END
 GO
-
-
 
 ---------------------- Ejecucion Procedures ---------------------------
 
