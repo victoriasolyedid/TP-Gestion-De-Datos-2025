@@ -108,7 +108,7 @@ CREATE TABLE [MVM].[BI_H_Factura] (
 	[sucursal_codigo]			[BIGINT],
 	[modelo_codigo]				[BIGINT],
 	[tiempo_codigo]				[BIGINT],
-	[rango_etario_codigo]		[BIGINT],
+	[rango_etario_codigo]		[BIGINT],	
 	[importe_total]				[DECIMAL](38,2)
 );
 
@@ -521,7 +521,7 @@ END
 GO
 
 -- Migración de Envio
-CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_Envio
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_ENVIO
 AS
 BEGIN
     INSERT INTO MVM.[BI_H_Envio](       
@@ -538,7 +538,7 @@ BEGIN
     FROM [MVM].[Envio] e
 	JOIN [MVM].[Factura] f ON f.codigo = e.factura_codigo
 	JOIN [MVM].[Cliente] c ON c.codigo = f.cliente_codigo
-	JOIN [MVM].[Direccion] d ON c.direccion_codigo = d.direccion
+	JOIN [MVM].[Direccion] d ON c.direccion_codigo = d.codigo
 	JOIN [MVM].[Localidad] l ON d.localidad_codigo = l.codigo
 	JOIN [MVM].[Provincia] p ON d.provincia_codigo = p.codigo
 	JOIN [MVM].[BI_D_Ubicacion] bu ON bu.localidad = l.nombre
@@ -546,6 +546,94 @@ BEGIN
 END
 GO
 
----------------------- Ejecucion Procedures ---------------------------
+---------------------- Ejecucion Migraciones  ---------------------------
 
+EXEC  [MVM].BI_MIGRAR_D_TIEMPO;
+EXEC  [MVM].BI_MIGRAR_D_UBICACION;
+EXEC  [MVM].BI_MIGRAR_D_RANGO_ETARIO;
+EXEC  [MVM].BI_MIGRAR_D_TURNOS;
+EXEC  [MVM].BI_MIGRAR_D_TIPO_MATERIAL;
+EXEC  [MVM].BI_MIGRAR_D_TIPO_MATERIAL;
+EXEC  [MVM].BI_MIGRAR_D_MODELO;
+EXEC  [MVM].BI_MIGRAR_D_ESTADO_PEDIDO;
+EXEC  [MVM].BI_MIGRAR_D_SUCURSAL;
+EXEC  [MVM].BI_MIGRAR_H_COMPRA;
+EXEC  [MVM].BI_MIGRAR_H_PEDIDO;
+EXEC  [MVM].BI_MIGRAR_H_FACTURA;
+EXEC  [MVM].BI_MIGRAR_H_ENVIO;
+GO
 
+---------------------- Creacion de Vistas  ---------------------------
+
+-- 2 
+-- Interpreto que "Factura promedio mensual" refiere al importe promedio por factura
+-- durante el cuatrimestre, ya que el enunciado menciona "sumatoria sobre el total de las mismas"
+
+CREATE VIEW [MVM].VIEW_2 AS
+SELECT 
+	bu.provincia AS provincia,
+    bt.anio AS anio,
+    bt.cuatrimestre AS cuatrimestre,
+	AVG(bf.importe_total) AS promedio_importe_total
+FROM [MVM].[BI_H_Factura] bf
+JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bf.sucursal_codigo
+JOIN [MVM].[BI_D_Ubicacion] bu ON bu.codigo = bs.ubicacion_sucursal_codigo
+JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bf.tiempo_codigo
+GROUP BY bu.provincia, bt.anio, bt.cuatrimestre
+GO
+
+-- 3
+CREATE OR ALTER VIEW [MVM].VIEW_3 AS
+WITH FacturaConDatos AS ( -- No encontre otra forma de hacerlo sin el WITH
+    SELECT 
+        bu.localidad,
+        bt.anio,
+        bt.cuatrimestre,
+        bre.rango_detalle,
+        bf.importe_total,
+        ROW_NUMBER() OVER (PARTITION BY bu.localidad, bt.anio, bt.cuatrimestre 
+                           ORDER BY SUM(bf.importe_total) OVER (PARTITION BY bu.localidad, bt.anio, bt.cuatrimestre, bre.rango_detalle) DESC) AS rn
+    FROM [MVM].[BI_H_Factura] bf
+    JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bf.sucursal_codigo
+    JOIN [MVM].[BI_D_Ubicacion] bu ON bu.codigo = bs.ubicacion_sucursal_codigo
+    JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bf.tiempo_codigo
+    JOIN [MVM].[BI_D_Rango_Etario] bre ON bre.codigo = bf.rango_etario_codigo
+)
+SELECT localidad, anio, cuatrimestre, rango_detalle
+FROM FacturaConDatos
+WHERE rn <= 3
+GO
+
+-- 4
+CREATE VIEW [MVM].VIEW_4 AS
+SELECT 
+bt.codigo AS turno, 
+bs.nro_sucursal AS sucursal, 
+btp.mes AS mes, 
+btp.anio AS anio,
+COUNT(*) AS volumen_pedidos
+FROM [MVM].[BI_H_Pedido] bp
+JOIN [MVM].[BI_D_Turno] bt ON bt.codigo = bp.turno_codigo
+JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bp.sucursal_codigo
+JOIN [MVM].[BI_D_Tiempo] btp ON btp.codigo = bp.tiempo_codigo
+GROUP BY bt.codigo, bs.nro_sucursal, btp.mes, btp.anio
+GO
+
+-- 5
+CREATE OR ALTER VIEW [MVM].VIEW_5 AS
+SELECT 
+    CAST(
+        COUNT(*) * 100.0 / NULLIF(SUM(COUNT(*)) OVER ( --NulIf para evitar divisiones por cero
+            PARTITION BY bs.nro_sucursal, btp.cuatrimestre
+        ), 0)
+        AS DECIMAL(5,2)
+    ) AS porcentaje_pedidos,
+    be.tipo AS estado,
+    bs.nro_sucursal AS sucursal, 
+    btp.cuatrimestre AS cuatrimestre
+FROM [MVM].[BI_H_Pedido] bp
+JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bp.sucursal_codigo
+JOIN [MVM].[BI_D_Tiempo] btp ON btp.codigo = bp.tiempo_codigo
+JOIN [MVM].[BI_D_Estado] be ON bp.estado_codigo = be.codigo
+GROUP BY be.tipo, bs.nro_sucursal, btp.cuatrimestre
+GO
