@@ -64,8 +64,8 @@ CREATE TABLE [MVM].[BI_D_Modelo] (
 /* Dimension_Turno */
 CREATE TABLE [MVM].[BI_D_Turno] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[turno_inicio]			[SMALLINT],
-	[turno_fin]				[SMALLINT]
+	[turno_inicio]			[TIME](0),
+	[turno_fin]				[TIME](0)
 ) ON [PRIMARY]
 
 /* Dimension_Estado */
@@ -232,4 +232,132 @@ COMMIT TRANSACTION;
 
 ----------------------- Migración de tablas ---------------------------
 
+-------------------------- Dimensiones --------------------------------
+
+-- Migración de Tiempo
+GO
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_TIEMPO
+AS
+BEGIN
+    INSERT INTO [BI_D_Tiempo](anio, cuatrimestre, mes)
+    SELECT DISTINCT
+        YEAR(fecha) AS anio,
+        DATEPART(QUARTER, fecha) AS cuatrimestre,
+        MONTH(fecha) AS mes
+    FROM (
+        SELECT p.fecha FROM [MVM].[Pedido] p
+        UNION
+        SELECT f.fecha_hora FROM [MVM].[Factura] f
+        UNION
+        SELECT e1.fecha_programada FROM [MVM].[Envio] e1
+        UNION
+        SELECT e2.fecha_entrega FROM [MVM].[Envio] e2
+    ) AS todas_fechas
+END
+GO
+
+-- Migración de Ubicacion
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_UBICACION
+AS
+BEGIN
+	INSERT INTO [BI_D_Ubicacion](provincia, localidad)
+	(SELECT d.provincia_codigo, d.localidad_codigo FROM [MVM].[Direccion] d
+	JOIN [MVM].[Provincia] p ON p.codigo = d.provincia_codigo
+	JOIN [MVM].[Localidad] l ON l.codigo = d.localidad_codigo)
+END
+GO
+
+-- Migración de Rango Etario
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_RANGO_ETARIO
+AS
+BEGIN
+    INSERT INTO [BI_D_Rango_Etario](rango_detalle)
+    VALUES ('<25')
+    INSERT INTO [BI_D_Rango_Etario](rango_detalle)
+    VALUES ('25-35')
+    INSERT INTO [BI_D_Rango_Etario](rango_detalle)
+    VALUES ('35-50')
+    INSERT INTO [BI_D_Rango_Etario](rango_detalle)
+    VALUES ('>50')
+    INSERT INTO [BI_D_Rango_Etario](rango_detalle)
+    VALUES ('DESCONOCIDO')
+END
+GO
+
+-- Migración de Turnos
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_TURNOS
+AS
+BEGIN
+	INSERT INTO [BI_D_Turno](turno_inicio, turno_fin)
+	VALUES ('08:00', '14:00'), ('14:00', '20:00')
+END
+GO
+
+-- Migración de Tipo Material
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_TIPO_MATERIAL
+AS
+BEGIN
+	INSERT INTO [MVM].[BI_D_Tipo_Material] (precio, tipo)
+	SELECT m.precio,
+       CASE 
+           WHEN r.codigo IS NOT NULL THEN 'Relleno'
+           WHEN ma.codigo IS NOT NULL THEN 'Madera'
+           WHEN t.codigo IS NOT NULL THEN 'Tela'
+       END AS tipo
+	  FROM Material m
+		LEFT JOIN Relleno r ON r.codigo = m.codigo
+		LEFT JOIN Madera ma ON ma.codigo = m.codigo
+		LEFT JOIN Tela t ON t.codigo = m.codigo
+END
+GO
+
+-- Migración de Modelo
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_MODELO
+AS
+BEGIN
+	INSERT INTO MVM.[BI_D_Modelo](nombre_modelo, precio_base)
+	(SELECT m.modelo, m.precio_base FROM [MVM].[Modelo] m)
+END
+GO
+
+-- Migración de Estado Pedido
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_ESTADO_PEDIDO
+AS
+BEGIN
+	INSERT INTO MVM.[BI_D_Estado](tipo)
+	(SELECT DISTINCT e.tipo FROM [MVM].[Estado] e)
+END
+GO
+
+-- Migración de Sucursal
+GO
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_SUCURSAL
+AS
+BEGIN
+    INSERT INTO [BI_D_Sucursal](nro_sucursal, ubicacion_sucursal_codigo)
+    (SELECT s.nro_sucursal, u.codigo
+	FROM [MVM].[Sucursal] s
+	JOIN [MVM].[Direccion] d ON s.direccion_codigo = d.direccion
+	JOIN [MVM].[Localidad] l ON d.localidad_codigo = l.codigo
+	JOIN [MVM].[Provincia] p ON d.provincia_codigo = p.codigo
+	JOIN [MVM].[BI_D_Ubicacion] u ON u.localidad = l.nombre
+								  AND u.provincia = p.nombre)
+END
+GO
+
+----------------------------- Hechos ---------------------------------
+
+-- Migración de Compra
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_COMPRA
+AS
+BEGIN
+	INSERT INTO MVM.[BI_H_Compra](cantidad, precio_unitario, total_compra)
+	(SELECT DISTINCT e.tipo FROM [MVM].[Estado] e)
+END
+GO
+
+
+
 ---------------------- Ejecucion Procedures ---------------------------
+
+
