@@ -49,7 +49,9 @@ CREATE TABLE [MVM].[BI_H_Compra] (
 	[tiempo_codigo]			[BIGINT],
 	[sucursal_codigo]		[BIGINT],
 	[tipo_material_codigo]	[BIGINT],
-	[subtotal_material]			[DECIMAL](18)
+	[nro_compra]			[BIGINT],
+	[subtotal_material]		[DECIMAL](18),
+	[total]					[DECIMAL](18)
 ) ON [PRIMARY]
 
 /* Dimension_Modelo */
@@ -90,7 +92,7 @@ CREATE TABLE [MVM].[BI_H_Envio] (
 	[tiempo_codigo]				[BIGINT],
 	[ubicacion_cliente_codigo]	[BIGINT],
 	[envio_costo_total]			[DECIMAL](18,2),
-	[envio_atrasado]			[SMALLINT] -- 1 = sí, 0 = no
+	[envio_atrasado]			[BIT] -- 1 = sí, 0 = no
 );
 
 /* lo vamos a usar mas adelante
@@ -230,6 +232,74 @@ COMMIT TRANSACTION;
 
 ----------------------- Migración de tablas ---------------------------
 
+--------------------------- Creacion de funciones  ----------------------
+GO
+CREATE FUNCTION [MVM].CALCULAR_RANGO_ETARIO (@FECHA_NACIMIENTO DATE)
+RETURNS SMALLINT
+AS
+BEGIN
+    DECLARE @ANIOS INT = DATEDIFF(YEAR, @FECHA_NACIMIENTO, GETDATE())
+    DECLARE @RES SMALLINT
+    IF @ANIOS < 25
+        SET @RES = 1
+    ELSE
+        IF @ANIOS BETWEEN 25 AND 35
+            SET @RES = 2
+        ELSE
+            IF @ANIOS BETWEEN 35 AND 50
+                SET @RES = 3
+            ELSE
+                IF @ANIOS > 50
+                    SET @RES = 4
+                ELSE
+                    SET @RES = 5
+    RETURN @RES
+END
+GO
+
+CREATE FUNCTION [MVM].CALCULAR_TURNO (@HORARIO DATETIME)
+RETURNS SMALLINT
+AS
+BEGIN
+    DECLARE @HORA INT = DATEPART(HOUR, @HORARIO)
+    DECLARE @RES SMALLINT
+    IF @HORA BETWEEN 8 AND 14
+            SET @RES = 1
+            ELSE
+            SET @RES = 2
+    RETURN @RES
+END
+GO
+
+CREATE FUNCTION [MVM].CALCULAR_FECHA(@FECHA DATETIME)
+RETURNS SMALLINT
+AS
+BEGIN
+DECLARE @ANIO INT
+DECLARE @CUATRIMESTRE INT
+DECLARE @MES INT
+
+SELECT @ANIO = YEAR(@FECHA), @CUATRIMESTRE = DATEPART(QUARTER,@FECHA), @MES = MONTH(@FECHA)
+RETURN (SELECT codigo FROM [BI_D_Tiempo]
+WHERE
+@ANIO = anio AND
+@CUATRIMESTRE = cuatrimestre AND
+@MES = mes
+)
+END
+GO
+
+CREATE FUNCTION [MVM].CALCULAR_ATRASADO (@FECHA_PROGRAMADA DATETIME, @FECHA_ENTREGADO DATETIME)
+RETURNS SMALLINT
+AS
+BEGIN
+    DECLARE @ATRASADO SMALLINT
+    IF DATEPART(HOUR,@FECHA_PROGRAMADA) < @FECHA_ENTREGADO
+SET @ATRASADO = 1
+ELSE
+SET @ATRASADO = 0
+RETURN @ATRASADO
+END
 -------------------------- Dimensiones --------------------------------
 
 -- Migración de Tiempo
@@ -349,8 +419,130 @@ GO
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_COMPRA
 AS
 BEGIN
-	INSERT INTO MVM.[BI_H_Compra](subtotal_material)
-	(SELECT dc.subtotal FROM [MVM].[DetalleCompra] dc)
+	INSERT INTO MVM.[BI_H_Compra](
+		tiempo_codigo, 
+		sucursal_codigo,
+		tipo_material_codigo,       
+		nro_compra, 
+		subtotal_material, 
+		total
+	)
+	SELECT 
+		MVM.CALCULAR_FECHA(c.fecha), 
+		bs.codigo, 
+		btm.codigo, 
+		c.nro_compra, 
+		dc.subtotal, 
+		c.total
+	FROM [MVM].[DetalleCompra] dc
+	JOIN [MVM].[Compra] c ON c.codigo = dc.compra_codigo
+	JOIN [MVM].[Sucursal] s ON s.codigo = c.sucursal_codigo
+	JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = s.nro_sucursal
+	JOIN [MVM].[Material] m ON m.codigo = dc.material_codigo
+
+	-- Detectar tipo de material
+	LEFT JOIN [MVM].[Tela] t ON t.codigo = m.codigo
+	LEFT JOIN [MVM].[Madera] ma ON ma.codigo = m.codigo
+	LEFT JOIN [MVM].[Relleno] r ON r.codigo = m.codigo
+
+	-- JOIN con dimensión tipo material usando tipo + precio
+	JOIN [MVM].[BI_D_Tipo_Material] btm 
+		ON btm.precio = m.precio 
+		AND btm.tipo = 
+			CASE 
+				WHEN r.codigo IS NOT NULL THEN 'Relleno'
+				WHEN ma.codigo IS NOT NULL THEN 'Madera'
+				WHEN t.codigo IS NOT NULL THEN 'Tela'
+			END
+END
+GO
+
+
+-- Migración de Pedido
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_PEDIDO
+AS
+BEGIN
+	INSERT INTO MVM.[BI_H_Pedido](
+		turno_codigo, 
+		sucursal_codigo,
+		estado_codigo,       
+		tiempo_codigo, 
+		total_pedido, 
+		tiempo_facturacion,
+		cantidad_sillones
+	)
+	SELECT 
+	[MVM].CALCULAR_TURNO(p.fecha),
+	bs.codigo,
+	be.codigo,
+	[MVM].CALCULAR_FECHA(p.fecha),
+	p.total,
+	DATEDIFF(DAY, p.fecha, f.fecha_hora),
+	dp.cantidad_sillones
+	FROM [MVM].[Pedido] p
+	JOIN [MVM].[DetallePedido] dp ON dp.pedido_codigo = p.codigo
+	JOIN [MVM].[Sucursal] s ON s.codigo = p.sucursal_codigo
+	JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = s.nro_sucursal
+	JOIN [MVM].[Estado] e ON e.pedido_codigo = p.codigo
+	JOIN [MVM].[BI_D_Estado] be ON be.tipo = e.tipo
+	JOIN [MVM].[DetalleFactura] df ON df.detalle_pedido_codigo = dp.codigo
+	JOIN [MVM].[Factura] f ON f.codigo = df.factura_codigo
+END
+GO
+
+
+-- Migración de Factura
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_FACTURA
+AS
+BEGIN
+    INSERT INTO MVM.[BI_H_Factura]( 
+        sucursal_codigo,
+        modelo_codigo,       
+        tiempo_codigo, 
+        rango_etario_codigo, 
+        importe_total
+    )
+    SELECT 
+        bs.codigo,
+        bm.codigo,
+        [MVM].CALCULAR_FECHA(f.fecha_hora),
+        [MVM].CALCULAR_RANGO_ETARIO(c.fecha_nacimiento),
+        total
+    FROM [MVM].[Factura] f
+    JOIN [MVM].[DetalleFactura] df ON df.factura_codigo = f.codigo
+    JOIN [MVM].[DetallePedido] dp ON dp.codigo = df.detalle_pedido_codigo
+    JOIN [MVM].[Sillon] s ON s.detalle_pedido_codigo = dp.codigo
+    JOIN [MVM].[Modelo] m ON m.codigo = s.modelo_codigo
+	JOIN [MVM].[BI_D_Modelo] bm ON bm.nombre_modelo = m.modelo
+    JOIN [MVM].[Sucursal] su ON su.codigo = f.sucursal_codigo
+    JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = su.nro_sucursal
+	JOIN [MVM].[Cliente] c ON c.codigo = f.cliente_codigo
+END
+GO
+
+-- Migración de Envio
+CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_Envio
+AS
+BEGIN
+    INSERT INTO MVM.[BI_H_Envio](       
+        tiempo_codigo, 
+        ubicacion_cliente_codigo, 
+        envio_costo_total,
+		envio_atrasado
+    )
+    SELECT 
+        [MVM].CALCULAR_FECHA(e.fecha_entrega),
+        bu.codigo,
+		e.total,
+		[MVM].CALCULAR_ATRASADO(e.fecha_programada,e.fecha_entrega)
+    FROM [MVM].[Envio] e
+	JOIN [MVM].[Factura] f ON f.codigo = e.factura_codigo
+	JOIN [MVM].[Cliente] c ON c.codigo = f.cliente_codigo
+	JOIN [MVM].[Direccion] d ON c.direccion_codigo = d.direccion
+	JOIN [MVM].[Localidad] l ON d.localidad_codigo = l.codigo
+	JOIN [MVM].[Provincia] p ON d.provincia_codigo = p.codigo
+	JOIN [MVM].[BI_D_Ubicacion] bu ON bu.localidad = l.nombre
+							      AND bu.provincia = p.nombre
 END
 GO
 
