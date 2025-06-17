@@ -13,13 +13,13 @@ CREATE TABLE [MVM].[BI_D_Tiempo] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[anio]					[SMALLINT],
 	[mes]					[SMALLINT],
-	[cuatrimestre]			[SMALLINT]
+	[cuatrimestre]				[SMALLINT]
 ) ON [PRIMARY]
 
 /* Dimension_Sucursal */
 CREATE TABLE [MVM].[BI_D_Sucursal] (
-	[codigo]						[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[nro_sucursal]					[BIGINT],
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[nro_sucursal]				[BIGINT],
 	[ubicacion_sucursal_codigo]		[BIGINT]
 ) ON [PRIMARY]
 
@@ -40,31 +40,31 @@ CREATE TABLE [MVM].[BI_D_Tipo_Material] (
 /* Dimension_Rango_Etario_Clientes */
 CREATE TABLE [MVM].[BI_D_Rango_Etario] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[rango_detalle]			[NVARCHAR](50)
+	[rango_detalle]				[NVARCHAR](50)
 ) ON [PRIMARY]
 
 /* Hechos_Compra */
 CREATE TABLE [MVM].[BI_H_Compra] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[tiempo_codigo]			[BIGINT],
-	[sucursal_codigo]		[BIGINT],
-	[tipo_material_codigo]	[BIGINT],
-	[nro_compra]			[BIGINT],
-	[subtotal_material]		[DECIMAL](18),
+	[tiempo_codigo]				[BIGINT],
+	[sucursal_codigo]			[BIGINT],
+	[tipo_material_codigo]			[BIGINT],
+	[nro_compra]				[BIGINT],
+	[subtotal_material]			[DECIMAL](18),
 	[total]					[DECIMAL](18)
 ) ON [PRIMARY]
 
 /* Dimension_Modelo */
 CREATE TABLE [MVM].[BI_D_Modelo] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[nombre_modelo]			[NVARCHAR](255),
-	[precio_base]			[DECIMAL](18,2)
+	[nombre_modelo]				[NVARCHAR](255),
+	[precio_base]				[DECIMAL](18,2)
 ) ON [PRIMARY]
 
 /* Dimension_Turno */
 CREATE TABLE [MVM].[BI_D_Turno] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[turno_inicio]			[TIME](0),
+	[turno_inicio]				[TIME](0),
 	[turno_fin]				[TIME](0)
 ) ON [PRIMARY]
 
@@ -77,38 +77,31 @@ CREATE TABLE [MVM].[BI_D_Estado] (
 /* Hechos_Pedido */
 CREATE TABLE [MVM].[BI_H_Pedido] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[turno_codigo]			[BIGINT],
-	[sucursal_codigo]		[BIGINT],
-	[estado_codigo]			[BIGINT],
-	[tiempo_codigo]			[BIGINT],
-	[total_pedido]			[DECIMAL](18,2),
-	[tiempo_facturacion]	[SMALLINT],
-	[cantidad_sillones]		[SMALLINT]
+	[turno_codigo]				[BIGINT],
+	[sucursal_codigo]			[BIGINT],
+	[estado_codigo]				[BIGINT],
+	[tiempo_codigo]				[BIGINT],
+	[total_pedido]				[DECIMAL](18,2),
+	[tiempo_facturacion]			[SMALLINT],
+	[cantidad_sillones]			[SMALLINT]
 ) ON [PRIMARY]
 
 /* Hechos_Envio */
 CREATE TABLE [MVM].[BI_H_Envio] (
-	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
 	[tiempo_codigo]				[BIGINT],
-	[ubicacion_cliente_codigo]	[BIGINT],
+	[ubicacion_cliente_codigo]		[BIGINT],
 	[envio_costo_total]			[DECIMAL](18,2),
-	[envio_atrasado]			[BIT] -- 1 = sí, 0 = no
+	[envio_atrasado]			[BIT] 
 );
-
-/* lo vamos a usar mas adelante
-CASE 
-	WHEN envio.fecha_entrega > envio.fecha_programada THEN 1
-	ELSE 0
-END AS envio_atrasado
-*/
 
 /* Hechos_Factura */
 CREATE TABLE [MVM].[BI_H_Factura] (
-	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
+	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
 	[sucursal_codigo]			[BIGINT],
 	[modelo_codigo]				[BIGINT],
 	[tiempo_codigo]				[BIGINT],
-	[rango_etario_codigo]		[BIGINT],	
+	[rango_etario_codigo]			[BIGINT],	
 	[importe_total]				[DECIMAL](38,2)
 );
 
@@ -565,6 +558,29 @@ GO
 
 ---------------------- Creacion de Vistas  ---------------------------
 
+-- 1
+-- TOTAL DE INGRESOS: suma de importe_total (H_Factura)
+-- TOTAL DE EGRESOS: suma de total (H_Compra)
+CREATE OR ALTER VIEW [MVM].VIEW_1 AS
+SELECT 
+    ts.anio,
+    ts.mes,
+    s.nro_sucursal,
+    ISNULL(SUM(f.importe_total), 0) AS total_ingresos,
+    ISNULL(SUM(c.total), 0) AS total_egresos,
+    ISNULL(SUM(f.importe_total), 0) - ISNULL(SUM(c.total), 0) AS ganancia
+FROM [MVM].[BI_D_Sucursal] s
+LEFT JOIN [MVM].[BI_H_Factura] f ON f.sucursal_codigo = s.codigo
+LEFT JOIN [MVM].[BI_D_Tiempo] tf ON tf.codigo = f.tiempo_codigo
+LEFT JOIN [MVM].[BI_H_Compra] c ON c.sucursal_codigo = s.codigo
+LEFT JOIN [MVM].[BI_D_Tiempo] tc ON tc.codigo = c.tiempo_codigo
+-- ts: traigo todos los meses y años que hay
+LEFT JOIN (SELECT DISTINCT anio, mes FROM [MVM].[BI_D_Tiempo]) ts ON (tf.anio = ts.anio AND tf.mes = ts.mes) 
+																	OR (tc.anio = ts.anio AND tc.mes = ts.mes)
+GROUP BY ts.anio, ts.mes, s.nro_sucursal
+GO
+
+
 -- 2 
 -- Interpreto que "Factura promedio mensual" refiere al importe promedio por factura
 -- durante el cuatrimestre, ya que el enunciado menciona "sumatoria sobre el total de las mismas"
@@ -607,11 +623,11 @@ GO
 -- 4
 CREATE VIEW [MVM].VIEW_4 AS
 SELECT 
-bt.codigo AS turno, 
-bs.nro_sucursal AS sucursal, 
-btp.mes AS mes, 
-btp.anio AS anio,
-COUNT(*) AS volumen_pedidos
+	bt.codigo AS turno, 
+	bs.nro_sucursal AS sucursal, 
+	btp.mes AS mes, 
+	btp.anio AS anio,
+	COUNT(*) AS volumen_pedidos
 FROM [MVM].[BI_H_Pedido] bp
 JOIN [MVM].[BI_D_Turno] bt ON bt.codigo = bp.turno_codigo
 JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bp.sucursal_codigo
@@ -636,4 +652,34 @@ JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bp.sucursal_codigo
 JOIN [MVM].[BI_D_Tiempo] btp ON btp.codigo = bp.tiempo_codigo
 JOIN [MVM].[BI_D_Estado] be ON bp.estado_codigo = be.codigo
 GROUP BY be.tipo, bs.nro_sucursal, btp.cuatrimestre
+GO
+
+-- 7
+-- promedio de total en H_Compras (agrupado por mes, interpreto que también se agrupa por año)
+CREATE OR ALTER VIEW [MVM].VIEW_7 AS
+SELECT 
+	bt.anio,
+	bt.mes,
+	AVG(bc.total) AS promedio_compras_mensual
+FROM [MVM].[BI_H_Compra] bc
+JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bc.tiempo_codigo
+GROUP BY bt.anio, bt.mes
+ORDER BY bt.anio, bt.mes
+GO
+
+-- 8
+-- subtotal_material en H_Compra: importe total gastado en tipo de material 
+-- agrupapdo por tipo de material, sucursal y cuatrimestre (asumo que también por año)
+CREATE OR ALTER VIEW [MVM].[VIEW_8] AS
+SELECT 
+    btm.tipo AS tipo_material,
+    bs.nro_sucursal AS nro_sucursal,
+    bt.anio,
+    bt.cuatrimestre,
+    SUM(bc.subtotal_material) AS total_gastado
+FROM [MVM].[BI_H_Compra] bc
+JOIN [MVM].[BI_D_Tipo_Material] btm ON btm.codigo = bc.tipo_material_codigo
+JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bc.sucursal_codigo
+JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bc.tiempo_codigo
+GROUP BY btm.tipo, bs.nro_sucursal, bt.anio, bt.cuatrimestre
 GO
