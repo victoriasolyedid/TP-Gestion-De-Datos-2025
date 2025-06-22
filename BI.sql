@@ -1,11 +1,62 @@
 
--------------------------- Eliminacion Tablas --------------------------
-
 ------------------------------------------------------------------------
 BEGIN TRANSACTION;
 
 USE [GD1C2025]
 GO
+
+SET NOCOUNT ON;
+SET ANSI_WARNINGS OFF;
+
+-------------------------- Eliminación de Elementos Existentes --------------------------
+
+-- Eliminar vistas si existen
+IF OBJECT_ID('[MVM].[VIEW_1]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_1];
+IF OBJECT_ID('[MVM].[VIEW_2]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_2];
+IF OBJECT_ID('[MVM].[VIEW_3]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_3];
+IF OBJECT_ID('[MVM].[VIEW_4]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_4];
+IF OBJECT_ID('[MVM].[VIEW_5]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_5];
+IF OBJECT_ID('[MVM].[VIEW_6]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_6];
+IF OBJECT_ID('[MVM].[VIEW_7]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_7];
+IF OBJECT_ID('[MVM].[VIEW_8]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_8];
+IF OBJECT_ID('[MVM].[VIEW_9]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_9];
+IF OBJECT_ID('[MVM].[VIEW_10]', 'V') IS NOT NULL DROP VIEW [MVM].[VIEW_10];
+
+-- Eliminar stored procedures si existen
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_TIEMPO]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_TIEMPO];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_UBICACION]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_UBICACION];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_RANGO_ETARIO]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_RANGO_ETARIO];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_TURNOS]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_TURNOS];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_TIPO_MATERIAL]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_TIPO_MATERIAL];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_MODELO]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_MODELO];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_ESTADO_PEDIDO]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_ESTADO_PEDIDO];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_D_SUCURSAL]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_D_SUCURSAL];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_H_COMPRA]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_H_COMPRA];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_H_PEDIDO]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_H_PEDIDO];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_H_FACTURA]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_H_FACTURA];
+IF OBJECT_ID('[MVM].[BI_MIGRAR_H_ENVIO]', 'P') IS NOT NULL DROP PROCEDURE [MVM].[BI_MIGRAR_H_ENVIO];
+
+-- Eliminar funciones si existen
+IF OBJECT_ID('[MVM].[CALCULAR_RANGO_ETARIO]', 'FN') IS NOT NULL DROP FUNCTION [MVM].[CALCULAR_RANGO_ETARIO];
+IF OBJECT_ID('[MVM].[CALCULAR_TURNO]', 'FN') IS NOT NULL DROP FUNCTION [MVM].[CALCULAR_TURNO];
+IF OBJECT_ID('[MVM].[CALCULAR_FECHA]', 'FN') IS NOT NULL DROP FUNCTION [MVM].[CALCULAR_FECHA];
+IF OBJECT_ID('[MVM].[CALCULAR_ATRASADO]', 'FN') IS NOT NULL DROP FUNCTION [MVM].[CALCULAR_ATRASADO];
+
+-- Eliminar tablas (primero las de hechos por las FK, luego las dimensiones)
+IF OBJECT_ID('[MVM].[BI_H_Compra]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_H_Compra];
+IF OBJECT_ID('[MVM].[BI_H_Pedido]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_H_Pedido];
+IF OBJECT_ID('[MVM].[BI_H_Envio]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_H_Envio];
+IF OBJECT_ID('[MVM].[BI_H_Factura]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_H_Factura];
+IF OBJECT_ID('[MVM].[BI_D_Sucursal]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Sucursal];
+IF OBJECT_ID('[MVM].[BI_D_Tiempo]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Tiempo];
+IF OBJECT_ID('[MVM].[BI_D_Ubicacion]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Ubicacion];
+IF OBJECT_ID('[MVM].[BI_D_Tipo_Material]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Tipo_Material];
+IF OBJECT_ID('[MVM].[BI_D_Rango_Etario]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Rango_Etario];
+IF OBJECT_ID('[MVM].[BI_D_Modelo]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Modelo];
+IF OBJECT_ID('[MVM].[BI_D_Turno]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Turno];
+IF OBJECT_ID('[MVM].[BI_D_Estado]', 'U') IS NOT NULL DROP TABLE [MVM].[BI_D_Estado];
+
+PRINT 'Elementos existentes eliminados exitosamente.'
 ------------------------ Creación de las Tablas ------------------------
 
 /* Dimension_Tiempo */
@@ -290,12 +341,14 @@ RETURNS SMALLINT
 AS
 BEGIN
     DECLARE @ATRASADO SMALLINT
-    IF DATEPART(HOUR,@FECHA_PROGRAMADA) < @FECHA_ENTREGADO
-	SET @ATRASADO = 1
-	ELSE
-	SET @ATRASADO = 0
-RETURN @ATRASADO
+    -- Comparar fechas completas, no solo la hora
+    IF @FECHA_ENTREGADO <= @FECHA_PROGRAMADA
+        SET @ATRASADO = 0
+    ELSE
+        SET @ATRASADO = 1
+    RETURN @ATRASADO
 END
+
 
 ------------------------ Dimensiones ------------------------
 
@@ -457,31 +510,37 @@ GO
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_PEDIDO
 AS
 BEGIN
-	INSERT INTO MVM.[BI_H_Pedido](
-		turno_codigo, 
-		sucursal_codigo,
-		estado_codigo,       
-		tiempo_codigo, 
-		total_pedido, 
-		tiempo_facturacion,
-		cantidad_sillones
-	)
-	SELECT 
-	[MVM].CALCULAR_TURNO(p.fecha),
-	bs.codigo,
-	be.codigo,
-	[MVM].CALCULAR_FECHA(p.fecha),
-	p.total,
-	DATEDIFF(DAY, p.fecha, f.fecha_hora),
-	dp.cantidad_sillones
-	FROM [MVM].[Pedido] p
-	JOIN [MVM].[DetallePedido] dp ON dp.pedido_codigo = p.codigo
-	JOIN [MVM].[Sucursal] s ON s.codigo = p.sucursal_codigo
-	JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = s.nro_sucursal
-	JOIN [MVM].[Estado] e ON e.pedido_codigo = p.codigo
-	JOIN [MVM].[BI_D_Estado] be ON be.tipo = e.tipo
-	JOIN [MVM].[DetalleFactura] df ON df.detalle_pedido_codigo = dp.codigo
-	JOIN [MVM].[Factura] f ON f.codigo = df.factura_codigo
+    INSERT INTO MVM.[BI_H_Pedido](
+        turno_codigo, 
+        sucursal_codigo,
+        estado_codigo,       
+        tiempo_codigo, 
+        total_pedido, 
+        tiempo_facturacion,
+        cantidad_sillones
+    )
+    SELECT 
+        [MVM].CALCULAR_TURNO(p.fecha),
+        bs.codigo,
+        be.codigo,
+        [MVM].CALCULAR_FECHA(p.fecha),
+        p.total,
+        MIN(DATEDIFF(DAY, p.fecha, f.fecha_hora)) AS tiempo_facturacion, -- NULL si no hay factura
+        SUM(dp.cantidad_sillones) AS cantidad_sillones 
+    FROM [MVM].[Pedido] p
+    JOIN [MVM].[Sucursal] s ON s.codigo = p.sucursal_codigo
+    JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = s.nro_sucursal
+    JOIN [MVM].[Estado] e ON e.pedido_codigo = p.codigo
+    JOIN [MVM].[BI_D_Estado] be ON be.tipo = e.tipo
+    JOIN [MVM].[DetallePedido] dp ON dp.pedido_codigo = p.codigo
+    LEFT JOIN [MVM].[DetalleFactura] df ON df.detalle_pedido_codigo = dp.codigo
+    LEFT JOIN [MVM].[Factura] f ON f.codigo = df.factura_codigo
+    GROUP BY 
+        p.codigo, 
+        p.fecha,
+        bs.codigo,
+        be.codigo,
+        p.total
 END
 GO
 
@@ -558,13 +617,9 @@ EXEC  [MVM].BI_MIGRAR_H_PEDIDO;
 EXEC  [MVM].BI_MIGRAR_H_FACTURA;
 EXEC  [MVM].BI_MIGRAR_H_ENVIO;
 GO
-
-
 ---------------------- Creacion de Vistas  ---------------------------
 
 -- 1
--- TOTAL DE INGRESOS: suma de importe_total (H_Factura)
--- TOTAL DE EGRESOS: suma de total (H_Compra)
 CREATE OR ALTER VIEW [MVM].[VIEW_1] AS
 SELECT 
     ts.anio,
@@ -594,33 +649,7 @@ LEFT JOIN (
 ) c_total ON c_total.sucursal_codigo = s.codigo AND c_total.tiempo_codigo = ts.codigo
 GO
 
-/*
-SELECT sum(total_ingresos), sum(total_egresos) FROM mvm.VIEW_1_PRUEBAPLI4
-WHERE nro_sucursal = '108'
-
-SELECT SUM(bf.subtotal) FROM MVM.BI_H_Factura bf
-WHERE bf.sucursal_codigo = '2'
-
-SELECT SUM(df.subtotal) FROM MVM.Factura f
-RIGHT JOIN MVM.DetalleFactura df ON df.factura_codigo = f.codigo
-JOIN MVM.Sucursal s ON s.codigo = f.sucursal_codigo
-WHERE s.nro_sucursal = '108'
-
-SELECT SUM(bc.subtotal_material) FROM MVM.BI_H_Compra bc
-WHERE bc.sucursal_codigo = '2'
-
-SELECT SUM(dc.subtotal) FROM MVM.Compra c
-JOIN MVM.DetalleCompra dc ON dc.compra_codigo = c.codigo
-JOIN MVM.Sucursal s ON s.codigo = c.sucursal_codigo
-WHERE s.nro_sucursal = '108'
-
-SELECT * FROM MVM.DetalleFactura
-*/
-
--- 2 
--- Interpreto que "Factura promedio mensual" refiere al importe promedio por factura
--- durante el cuatrimestre, ya que el enunciado menciona "sumatoria sobre el total de las mismas"
-
+--2
 CREATE OR ALTER VIEW [MVM].[VIEW_2] AS
 SELECT 
     bu.provincia AS provincia,
@@ -641,6 +670,7 @@ JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = facturas_unicas.tiempo_codigo
 GROUP BY bu.provincia, bs.nro_sucursal, bt.anio, bt.cuatrimestre
 GO
 
+
 -- 3
 CREATE OR ALTER VIEW [MVM].[VIEW_3] AS
 SELECT TOP 3 WITH TIES
@@ -659,20 +689,19 @@ GROUP BY bu.localidad, bt.anio, bt.cuatrimestre, bre.rango_detalle, bm.nombre_mo
 ORDER BY bu.localidad, bt.anio, bt.cuatrimestre, bre.rango_detalle, COUNT(*) DESC;
 GO
 
-
 -- 4
-CREATE VIEW [MVM].[VIEW_4] AS
+CREATE OR ALTER VIEW [MVM].[VIEW_4] AS
 SELECT 
-	bt.codigo AS turno, 
-	bs.nro_sucursal AS sucursal, 
-	btp.mes AS mes, 
-	btp.anio AS anio,
-	COUNT(*) AS volumen_pedidos
+    bt.codigo AS turno, 
+    bs.nro_sucursal AS sucursal, 
+    btp.mes AS mes, 
+    btp.anio AS anio,
+    COUNT(*) AS volumen_pedidos
 FROM [MVM].[BI_H_Pedido] bp
 JOIN [MVM].[BI_D_Turno] bt ON bt.codigo = bp.turno_codigo
 JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bp.sucursal_codigo
 JOIN [MVM].[BI_D_Tiempo] btp ON btp.codigo = bp.tiempo_codigo
-GROUP BY bt.codigo, bs.nro_sucursal, btp.mes, btp.anio
+GROUP BY bt.codigo, bs.nro_sucursal, btp.mes, btp.anio;
 GO
 
 -- 5
@@ -695,32 +724,30 @@ GROUP BY be.tipo, bs.nro_sucursal, btp.cuatrimestre
 GO
 
 -- 6
-CREATE VIEW [MVM].[VIEW_6] AS
+CREATE OR ALTER VIEW [MVM].[VIEW_6] AS
 SELECT
 	pedido.sucursal_codigo AS sucursal,
 	tiempo.cuatrimestre AS cuatrimestre,
-	AVG(pedido.tiempo_facturacion) AS tiempo_facturacion_en_dias
+	tiempo.anio AS anio,
+	ISNULL(AVG(pedido.tiempo_facturacion),0) AS tiempo_facturacion_en_dias
 FROM [MVM].[BI_H_Pedido] pedido
 JOIN [MVM].[BI_D_Tiempo] tiempo ON tiempo.codigo = pedido.tiempo_codigo
-GROUP BY pedido.sucursal_codigo, tiempo.cuatrimestre
+GROUP BY pedido.sucursal_codigo, tiempo.cuatrimestre, tiempo.anio
 GO
 
+
 -- 7
--- promedio de total en H_Compras (agrupado por mes, interpreto que también se agrupa por año)
 CREATE OR ALTER VIEW [MVM].[VIEW_7] AS
 SELECT 
-	bt.anio,
-	bt.mes,
-	AVG(bc.total) AS promedio_compras_mensual
+    bt.anio,
+    bt.mes,
+    SUM(bc.subtotal_material) * 1.0 / NULLIF(COUNT(DISTINCT bc.nro_compra), 0) AS promedio_compras_mensual
 FROM [MVM].[BI_H_Compra] bc
 JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bc.tiempo_codigo
 GROUP BY bt.anio, bt.mes
-ORDER BY bt.anio, bt.mes
 GO
 
 -- 8
--- subtotal_material en H_Compra: importe total gastado en tipo de material 
--- agrupapdo por tipo de material, sucursal y cuatrimestre (asumo que también por año)
 CREATE OR ALTER VIEW [MVM].[VIEW_8] AS
 SELECT 
     btm.tipo AS tipo_material,
@@ -736,19 +763,19 @@ GROUP BY btm.tipo, bs.nro_sucursal, bt.anio, bt.cuatrimestre
 GO
 
 -- 9
-CREATE VIEW [MVM].[VIEW_9] AS
+CREATE OR ALTER VIEW [MVM].[VIEW_9] AS
 SELECT
-	tiempo.mes AS mes,
-	tiempo.anio AS anio,
-	-- SUM(envio.envio_atrasado): si está atrasado da '1', si los sumo me da el total de envios atrasados
-	CAST((COUNT(*) - SUM(envio.envio_atrasado)) AS FLOAT) * 100.0 / COUNT(*) AS porcentaje_cumplimiento
+    tiempo.mes AS mes,
+    tiempo.anio AS anio,
+    CAST(SUM(CASE WHEN envio.envio_atrasado = 0
+                  THEN 1 ELSE 0 END) AS FLOAT) * 100.0 / COUNT(*) AS porcentaje_cumplimiento
 FROM [MVM].[BI_H_Envio] envio
 JOIN [MVM].[BI_D_Tiempo] tiempo ON tiempo.codigo = envio.tiempo_codigo
 GROUP BY tiempo.mes, tiempo.anio
 GO
 
 -- 10
-CREATE VIEW [MVM].[VIEW_10] AS
+CREATE OR ALTER VIEW [MVM].[VIEW_10] AS
 SELECT
 	TOP 3 
 	ubi.provincia AS provincia,
@@ -757,5 +784,5 @@ SELECT
 FROM [MVM].[BI_H_Envio] envio
 JOIN [MVM].[BI_D_Ubicacion] ubi ON ubi.codigo = envio.ubicacion_cliente_codigo
 GROUP BY ubi.provincia, ubi.localidad
-ORDER BY 3 DESC
+ORDER BY AVG(envio_costo_total) DESC
 
