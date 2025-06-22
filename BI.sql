@@ -1,25 +1,25 @@
 
----------------------- Eliminacion Tablas ------------------------------
+-------------------------- Eliminacion Tablas --------------------------
 
 ------------------------------------------------------------------------
 BEGIN TRANSACTION;
 
 USE [GD1C2025]
 GO
----------------- Creación de las tablas ---------------------------
+------------------------ Creación de las Tablas ------------------------
 
 /* Dimension_Tiempo */
 CREATE TABLE [MVM].[BI_D_Tiempo] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[anio]					[SMALLINT],
 	[mes]					[SMALLINT],
-	[cuatrimestre]				[SMALLINT]
+	[cuatrimestre]			[SMALLINT]
 ) ON [PRIMARY]
 
 /* Dimension_Sucursal */
 CREATE TABLE [MVM].[BI_D_Sucursal] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[nro_sucursal]				[BIGINT],
+	[codigo]						[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[nro_sucursal]					[BIGINT],
 	[ubicacion_sucursal_codigo]		[BIGINT]
 ) ON [PRIMARY]
 
@@ -40,72 +40,72 @@ CREATE TABLE [MVM].[BI_D_Tipo_Material] (
 /* Dimension_Rango_Etario_Clientes */
 CREATE TABLE [MVM].[BI_D_Rango_Etario] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[rango_detalle]				[NVARCHAR](50)
+	[rango_detalle]			[NVARCHAR](50)
 ) ON [PRIMARY]
 
 /* Hechos_Compra */
 CREATE TABLE [MVM].[BI_H_Compra] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[tiempo_codigo]				[BIGINT],
 	[sucursal_codigo]			[BIGINT],
-	[tipo_material_codigo]			[BIGINT],
+	[tipo_material_codigo]		[BIGINT],
 	[nro_compra]				[BIGINT],
 	[subtotal_material]			[DECIMAL](18),
-	[total]					[DECIMAL](18)
+	[total]						[DECIMAL](18)
 ) ON [PRIMARY]
 
 /* Dimension_Modelo */
 CREATE TABLE [MVM].[BI_D_Modelo] (
 	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[nombre_modelo]				[NVARCHAR](255),
-	[precio_base]				[DECIMAL](18,2)
+	[nombre_modelo]			[NVARCHAR](255),
+	[precio_base]			[DECIMAL](18,2)
 ) ON [PRIMARY]
 
 /* Dimension_Turno */
 CREATE TABLE [MVM].[BI_D_Turno] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[turno_inicio]				[TIME](0),
-	[turno_fin]				[TIME](0)
+	[codigo]			[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[turno_inicio]		[TIME](0),
+	[turno_fin]			[TIME](0)
 ) ON [PRIMARY]
 
 /* Dimension_Estado */
 CREATE TABLE [MVM].[BI_D_Estado] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
-	[tipo]					[NVARCHAR](255)
+	[codigo]		[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[tipo]			[NVARCHAR](255)
 ) ON [PRIMARY]
 
 /* Hechos_Pedido */
 CREATE TABLE [MVM].[BI_H_Pedido] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL, 
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL, 
 	[turno_codigo]				[BIGINT],
 	[sucursal_codigo]			[BIGINT],
 	[estado_codigo]				[BIGINT],
 	[tiempo_codigo]				[BIGINT],
 	[total_pedido]				[DECIMAL](18,2),
-	[tiempo_facturacion]			[SMALLINT],
+	[tiempo_facturacion]		[SMALLINT],
 	[cantidad_sillones]			[SMALLINT]
 ) ON [PRIMARY]
 
 /* Hechos_Envio */
 CREATE TABLE [MVM].[BI_H_Envio] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
 	[tiempo_codigo]				[BIGINT],
-	[ubicacion_cliente_codigo]		[BIGINT],
+	[ubicacion_cliente_codigo]	[BIGINT],
 	[envio_costo_total]			[DECIMAL](18,2),
 	[envio_atrasado]			[BIT] 
 );
 
 /* Hechos_Factura */
 CREATE TABLE [MVM].[BI_H_Factura] (
-	[codigo]				[BIGINT] IDENTITY(1,1) NOT NULL,
+	[codigo]					[BIGINT] IDENTITY(1,1) NOT NULL,
 	[sucursal_codigo]			[BIGINT],
 	[modelo_codigo]				[BIGINT],
 	[tiempo_codigo]				[BIGINT],
-	[rango_etario_codigo]			[BIGINT],	
+	[rango_etario_codigo]		[BIGINT],	
 	[importe_total]				[DECIMAL](38,2)
 );
 
--------------------- Creación de primary keys -------------------------
+------------------------ Creación de primary keys ------------------------
 
 /* Dimension_Tiempo */
 ALTER TABLE [MVM].[BI_D_Tiempo]
@@ -155,7 +155,7 @@ ADD CONSTRAINT PK_H_Envio PRIMARY KEY (codigo);
 ALTER TABLE [MVM].[BI_H_Factura]
 ADD CONSTRAINT PK_H_Factura PRIMARY KEY (codigo);
 
--------------------- Creación de foreign keys -------------------------
+------------------------ Creación de foreign keys ------------------------
 
 /* Dimension_Sucursal */
 ALTER TABLE [MVM].[BI_D_Sucursal]
@@ -218,14 +218,16 @@ ALTER TABLE [MVM].[BI_H_Factura]
 ADD CONSTRAINT FK_Factura_RangoEtario
 FOREIGN KEY (rango_etario_codigo) REFERENCES [MVM].[BI_D_Rango_Etario](codigo);
 
------------------------ Creación de indices ---------------------------
+------------------------ Creación de Indices ------------------------
+
 PRINT 'Tablas, índices y constraints creados exitosamente.'
 
 COMMIT TRANSACTION;
 
------------------------ Migración de tablas ---------------------------
+------------------------ Migración de Tablas ------------------------
 
---------------------------- Creacion de funciones  ----------------------
+---------------------- Creacion de Funciones ------------------------
+
 GO
 CREATE FUNCTION [MVM].CALCULAR_RANGO_ETARIO (@FECHA_NACIMIENTO DATE)
 RETURNS SMALLINT
@@ -268,17 +270,17 @@ CREATE FUNCTION [MVM].CALCULAR_FECHA(@FECHA DATETIME)
 RETURNS SMALLINT
 AS
 BEGIN
-DECLARE @ANIO INT
-DECLARE @CUATRIMESTRE INT
-DECLARE @MES INT
+	DECLARE @ANIO INT
+	DECLARE @CUATRIMESTRE INT
+	DECLARE @MES INT
 
-SELECT @ANIO = YEAR(@FECHA), @CUATRIMESTRE = DATEPART(QUARTER,@FECHA), @MES = MONTH(@FECHA)
-RETURN (SELECT codigo FROM [BI_D_Tiempo]
-WHERE
-@ANIO = anio AND
-@CUATRIMESTRE = cuatrimestre AND
-@MES = mes
-)
+	SELECT @ANIO = YEAR(@FECHA), @CUATRIMESTRE = DATEPART(QUARTER,@FECHA), @MES = MONTH(@FECHA)
+	RETURN (SELECT codigo FROM [BI_D_Tiempo]
+	WHERE
+	@ANIO = anio AND
+	@CUATRIMESTRE = cuatrimestre AND
+	@MES = mes
+	)
 END
 GO
 
@@ -288,14 +290,15 @@ AS
 BEGIN
     DECLARE @ATRASADO SMALLINT
     IF DATEPART(HOUR,@FECHA_PROGRAMADA) < @FECHA_ENTREGADO
-SET @ATRASADO = 1
-ELSE
-SET @ATRASADO = 0
+	SET @ATRASADO = 1
+	ELSE
+	SET @ATRASADO = 0
 RETURN @ATRASADO
 END
--------------------------- Dimensiones --------------------------------
 
--- Migración de Tiempo
+------------------------ Dimensiones ------------------------
+
+/* Migración de Tiempo */
 GO
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_TIEMPO
 AS
@@ -317,7 +320,7 @@ BEGIN
 END
 GO
 
--- Migración de Ubicacion
+/* Migración de Ubicacion */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_UBICACION
 AS
 BEGIN
@@ -328,7 +331,7 @@ BEGIN
 END
 GO
 
--- Migración de Rango Etario
+/* Migración de Rango Etario */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_RANGO_ETARIO
 AS
 BEGIN
@@ -345,7 +348,7 @@ BEGIN
 END
 GO
 
--- Migración de Turnos
+/* Migración de Turnos */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_TURNOS
 AS
 BEGIN
@@ -354,7 +357,7 @@ BEGIN
 END
 GO
 
--- Migración de Tipo Material
+/* Migración de Tipo Material */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_TIPO_MATERIAL
 AS
 BEGIN
@@ -372,7 +375,7 @@ BEGIN
 END
 GO
 
--- Migración de Modelo
+/* Migración de Modelo */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_MODELO
 AS
 BEGIN
@@ -381,7 +384,7 @@ BEGIN
 END
 GO
 
--- Migración de Estado Pedido
+/* Migración de Estado Pedido */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_ESTADO_PEDIDO
 AS
 BEGIN
@@ -390,8 +393,7 @@ BEGIN
 END
 GO
 
--- Migración de Sucursal
-GO
+/* Migración de Sucursal */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_SUCURSAL
 AS
 BEGIN
@@ -406,9 +408,9 @@ BEGIN
 END
 GO
 
------------------------------ Hechos ---------------------------------
+------------------------ Hechos ------------------------
 
--- Migración de Compra
+/* Migración de Compra */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_COMPRA
 AS
 BEGIN
@@ -450,8 +452,7 @@ BEGIN
 END
 GO
 
-
--- Migración de Pedido
+/* Migración de Pedido */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_PEDIDO
 AS
 BEGIN
@@ -483,8 +484,7 @@ BEGIN
 END
 GO
 
-
--- Migración de Factura
+/* Migración de Factura */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_FACTURA
 AS
 BEGIN
@@ -513,7 +513,7 @@ BEGIN
 END
 GO
 
--- Migración de Envio
+/* Migración de Envio */
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_ENVIO
 AS
 BEGIN
@@ -561,7 +561,7 @@ GO
 -- 1
 -- TOTAL DE INGRESOS: suma de importe_total (H_Factura)
 -- TOTAL DE EGRESOS: suma de total (H_Compra)
-CREATE OR ALTER VIEW [MVM].VIEW_1 AS
+CREATE OR ALTER VIEW [MVM].[VIEW_1] AS
 SELECT 
     ts.anio,
     ts.mes,
@@ -580,12 +580,11 @@ LEFT JOIN (SELECT DISTINCT anio, mes FROM [MVM].[BI_D_Tiempo]) ts ON (tf.anio = 
 GROUP BY ts.anio, ts.mes, s.nro_sucursal
 GO
 
-
 -- 2 
 -- Interpreto que "Factura promedio mensual" refiere al importe promedio por factura
 -- durante el cuatrimestre, ya que el enunciado menciona "sumatoria sobre el total de las mismas"
 
-CREATE VIEW [MVM].VIEW_2 AS
+CREATE VIEW [MVM].[VIEW_2] AS
 SELECT 
 	bu.provincia AS provincia,
     bt.anio AS anio,
@@ -599,7 +598,7 @@ GROUP BY bu.provincia, bt.anio, bt.cuatrimestre
 GO
 
 -- 3
-CREATE OR ALTER VIEW [MVM].VIEW_3 AS
+CREATE OR ALTER VIEW [MVM].[VIEW_3] AS
 WITH FacturaConDatos AS ( -- No encontre otra forma de hacerlo sin el WITH
     SELECT 
         bu.localidad,
@@ -621,7 +620,7 @@ WHERE rn <= 3
 GO
 
 -- 4
-CREATE VIEW [MVM].VIEW_4 AS
+CREATE VIEW [MVM].[VIEW_4] AS
 SELECT 
 	bt.codigo AS turno, 
 	bs.nro_sucursal AS sucursal, 
@@ -636,7 +635,7 @@ GROUP BY bt.codigo, bs.nro_sucursal, btp.mes, btp.anio
 GO
 
 -- 5
-CREATE OR ALTER VIEW [MVM].VIEW_5 AS
+CREATE OR ALTER VIEW [MVM].[VIEW_5] AS
 SELECT 
     CAST(
         COUNT(*) * 100.0 / NULLIF(SUM(COUNT(*)) OVER ( --NulIf para evitar divisiones por cero
@@ -654,9 +653,20 @@ JOIN [MVM].[BI_D_Estado] be ON bp.estado_codigo = be.codigo
 GROUP BY be.tipo, bs.nro_sucursal, btp.cuatrimestre
 GO
 
+-- 6
+CREATE VIEW [MVM].[VIEW_6] AS
+SELECT
+	pedido.sucursal_codigo AS sucursal,
+	tiempo.cuatrimestre AS cuatrimestre,
+	AVG(pedido.tiempo_facturacion) AS tiempo_facturacion_en_dias
+FROM [MVM].[BI_H_Pedido] pedido
+JOIN [MVM].[BI_D_Tiempo] tiempo ON tiempo.codigo = pedido.tiempo_codigo
+GROUP BY pedido.sucursal_codigo, tiempo.cuatrimestre
+GO
+
 -- 7
 -- promedio de total en H_Compras (agrupado por mes, interpreto que también se agrupa por año)
-CREATE OR ALTER VIEW [MVM].VIEW_7 AS
+CREATE OR ALTER VIEW [MVM].[VIEW_7] AS
 SELECT 
 	bt.anio,
 	bt.mes,
@@ -683,3 +693,27 @@ JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bc.sucursal_codigo
 JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bc.tiempo_codigo
 GROUP BY btm.tipo, bs.nro_sucursal, bt.anio, bt.cuatrimestre
 GO
+
+-- 9
+CREATE VIEW [MVM].[VIEW_9] AS
+SELECT
+	tiempo.mes AS mes,
+	tiempo.anio AS anio,
+	-- SUM(envio.envio_atrasado): si está atrasado da '1', si los sumo me da el total de envios atrasados
+	CAST((COUNT(*) - SUM(envio.envio_atrasado)) AS FLOAT) * 100.0 / COUNT(*) AS porcentaje_cumplimiento
+FROM [MVM].[BI_H_Envio] envio
+JOIN [MVM].[BI_D_Tiempo] tiempo ON tiempo.codigo = envio.tiempo_codigo
+GROUP BY tiempo.mes, tiempo.anio
+GO
+
+-- 10
+CREATE VIEW [MVM].[VIEW_10] AS
+SELECT
+	TOP 3 
+	ubi.provincia AS provincia,
+	ubi.localidad AS localidad,
+	AVG(envio_costo_total) AS promedio_costo_envio_total
+FROM [MVM].[BI_H_Envio] envio
+JOIN [MVM].[BI_D_Ubicacion] ubi ON ubi.codigo = envio.ubicacion_cliente_codigo
+GROUP BY ubi.provincia, ubi.localidad
+ORDER BY 3 DESC
