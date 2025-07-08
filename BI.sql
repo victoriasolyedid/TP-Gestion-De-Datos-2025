@@ -130,7 +130,6 @@ CREATE TABLE [MVM].[BI_H_Pedido] (
 	[sucursal_codigo]			[BIGINT],
 	[estado_codigo]				[BIGINT],
 	[tiempo_codigo]				[BIGINT],
-	[total_pedido]				[DECIMAL](18,2),
 	[tiempo_facturacion]		[SMALLINT],
 	[cantidad_pedidos]			[SMALLINT]
 ) ON [PRIMARY]
@@ -322,19 +321,25 @@ CREATE OR ALTER FUNCTION [MVM].CALCULAR_FECHA(@FECHA DATETIME)
 RETURNS SMALLINT
 AS
 BEGIN
-	DECLARE @ANIO INT
-	DECLARE @CUATRIMESTRE INT
-	DECLARE @MES INT
-
-	SELECT @ANIO = YEAR(@FECHA), @CUATRIMESTRE = DATEPART(QUARTER,@FECHA), @MES = MONTH(@FECHA)
-	RETURN (SELECT codigo FROM [BI_D_Tiempo]
-	WHERE
-	@ANIO = anio AND
-	@CUATRIMESTRE = cuatrimestre AND
-	@MES = mes
+	DECLARE @ANIO INT = YEAR(@FECHA)
+	DECLARE @MES INT = MONTH(@FECHA)
+	DECLARE @CUATRIMESTRE INT = 
+		CASE 
+			WHEN @MES BETWEEN 1 AND 4 THEN 1    -- Enero-Abril
+			WHEN @MES BETWEEN 5 AND 8 THEN 2    -- Mayo-Agosto  
+			WHEN @MES BETWEEN 9 AND 12 THEN 3   -- Septiembre-Diciembre
+		END
+	
+	RETURN (
+		SELECT codigo 
+		FROM [MVM].[BI_D_Tiempo]
+		WHERE anio = @ANIO 
+		  AND cuatrimestre = @CUATRIMESTRE 
+		  AND mes = @MES
 	)
 END
 GO
+
 
 CREATE OR ALTER FUNCTION [MVM].CALCULAR_ATRASADO (@FECHA_PROGRAMADA DATETIME, @FECHA_ENTREGADO DATETIME)
 RETURNS SMALLINT
@@ -358,10 +363,14 @@ CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_D_TIEMPO
 AS
 BEGIN
     INSERT INTO [BI_D_Tiempo](anio, cuatrimestre, mes)
-    SELECT DISTINCT
-        YEAR(fecha) AS anio,
-        DATEPART(QUARTER, fecha) AS cuatrimestre,
-        MONTH(fecha) AS mes
+   SELECT DISTINCT
+    YEAR(fecha) AS anio,
+    CASE 
+        WHEN MONTH(fecha) BETWEEN 1 AND 4 THEN 1    
+        WHEN MONTH(fecha) BETWEEN 5 AND 8 THEN 2     
+        WHEN MONTH(fecha) BETWEEN 9 AND 12 THEN 3   
+    END AS cuatrimestre,  
+    MONTH(fecha) AS mes
     FROM (
         SELECT p.fecha FROM [MVM].[Pedido] p
         UNION
@@ -483,10 +492,14 @@ BEGIN
     JOIN [MVM].[Compra] c ON c.codigo = dc.compra_codigo
     JOIN [MVM].[Sucursal] s ON s.codigo = c.sucursal_codigo
     JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = s.nro_sucursal
-    JOIN [MVM].[BI_D_Tiempo] bt 
-        ON bt.anio = YEAR(c.fecha) 
-        AND bt.cuatrimestre = DATEPART(QUARTER, c.fecha) 
-        AND bt.mes = MONTH(c.fecha)
+	JOIN [MVM].[BI_D_Tiempo] bt 
+	ON bt.anio = YEAR(c.fecha) 
+	AND bt.cuatrimestre = CASE 
+		WHEN MONTH(c.fecha) BETWEEN 1 AND 4 THEN 1
+		WHEN MONTH(c.fecha) BETWEEN 5 AND 8 THEN 2
+		WHEN MONTH(c.fecha) BETWEEN 9 AND 12 THEN 3
+	END  
+	AND bt.mes = MONTH(c.fecha)
     JOIN [MVM].[Material] m ON m.codigo = dc.material_codigo
     -- Detectar tipo de material
     LEFT JOIN [MVM].[Tela] t ON t.codigo = m.codigo
@@ -507,6 +520,9 @@ BEGIN
         btm.codigo
 END
 GO
+
+
+
 /* Migración de Pedido*/
 CREATE OR ALTER PROCEDURE [MVM].BI_MIGRAR_H_PEDIDO 
 AS 
@@ -516,7 +532,6 @@ BEGIN
         sucursal_codigo, 
         estado_codigo, 
         tiempo_codigo, 
-        total_pedido, 
         tiempo_facturacion, 
         cantidad_pedidos  -- Cambiado de cantidad_sillones
     ) 
@@ -525,15 +540,18 @@ BEGIN
         bs.codigo AS sucursal_codigo,
         be.codigo AS estado_codigo,
         bt.codigo AS tiempo_codigo,
-        SUM(p.total) AS total_pedido,
         AVG(DATEDIFF(DAY, p.fecha, f.fecha_hora)) AS tiempo_facturacion,
         COUNT(DISTINCT p.codigo) AS cantidad_pedidos  -- Contar pedidos únicos
     FROM [MVM].[Pedido] p 
     JOIN [MVM].[Sucursal] s ON s.codigo = p.sucursal_codigo 
     JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = s.nro_sucursal 
     JOIN [MVM].[BI_D_Tiempo] bt ON bt.anio = YEAR(p.fecha) 
-                                AND bt.cuatrimestre = DATEPART(QUARTER, p.fecha) 
-                                AND bt.mes = MONTH(p.fecha) 
+                            AND bt.cuatrimestre = CASE 
+                                WHEN MONTH(p.fecha) BETWEEN 1 AND 4 THEN 1
+                                WHEN MONTH(p.fecha) BETWEEN 5 AND 8 THEN 2
+                                WHEN MONTH(p.fecha) BETWEEN 9 AND 12 THEN 3
+                            END  
+                            AND bt.mes = MONTH(p.fecha)
     JOIN [MVM].[Estado] e ON e.pedido_codigo = p.codigo 
     JOIN [MVM].[BI_D_Estado] be ON be.tipo = e.tipo 
     LEFT JOIN [MVM].[DetallePedido] dp ON dp.pedido_codigo = p.codigo
@@ -565,7 +583,7 @@ BEGIN
         bm.codigo AS modelo_codigo,
         bt.codigo AS tiempo_codigo,
         [MVM].CALCULAR_RANGO_ETARIO(c.fecha_nacimiento) AS rango_etario_codigo,
-        SUM(df.subtotal) AS subtotal,
+        SUM(f.total) AS subtotal,
         SUM(dp.cantidad_sillones) AS cantidad_sillones,  -- Más eficiente
         COUNT(DISTINCT f.codigo) AS cantidad_facturas
     FROM [MVM].[Factura] f
@@ -577,15 +595,19 @@ BEGIN
     JOIN [MVM].[Sucursal] su ON su.codigo = f.sucursal_codigo
     JOIN [MVM].[BI_D_Sucursal] bs ON bs.nro_sucursal = su.nro_sucursal
     JOIN [MVM].[BI_D_Tiempo] bt 
-        ON bt.anio = YEAR(f.fecha_hora) 
-        AND bt.cuatrimestre = DATEPART(QUARTER, f.fecha_hora) 
-        AND bt.mes = MONTH(f.fecha_hora)
+    ON bt.anio = YEAR(f.fecha_hora) 
+    AND bt.cuatrimestre = CASE 
+        WHEN MONTH(f.fecha_hora) BETWEEN 1 AND 4 THEN 1
+        WHEN MONTH(f.fecha_hora) BETWEEN 5 AND 8 THEN 2
+        WHEN MONTH(f.fecha_hora) BETWEEN 9 AND 12 THEN 3
+    END  
+	AND bt.mes = MONTH(f.fecha_hora)
     JOIN [MVM].[Cliente] c ON c.codigo = f.cliente_codigo
     GROUP BY 
         bs.codigo,
         bm.codigo,
         bt.codigo,
-        [MVM].CALCULAR_RANGO_ETARIO(c.fecha_nacimiento)
+		[MVM].CALCULAR_RANGO_ETARIO(c.fecha_nacimiento)
 END
 GO
 
@@ -618,10 +640,14 @@ BEGIN
     JOIN [MVM].[BI_D_Ubicacion] bu ON bu.localidad = l.nombre
                                   AND bu.provincia = p.nombre
     -- JOIN con dimensión tiempo (CLAVE PARA AGREGACIÓN MENSUAL)
-    JOIN [MVM].[BI_D_Tiempo] bt 
-        ON bt.anio = YEAR(e.fecha_entrega) 
-        AND bt.cuatrimestre = DATEPART(QUARTER, e.fecha_entrega) 
-        AND bt.mes = MONTH(e.fecha_entrega)
+	JOIN [MVM].[BI_D_Tiempo] bt 
+    ON bt.anio = YEAR(e.fecha_entrega) 
+    AND bt.cuatrimestre = CASE 
+        WHEN MONTH(e.fecha_entrega) BETWEEN 1 AND 4 THEN 1
+        WHEN MONTH(e.fecha_entrega) BETWEEN 5 AND 8 THEN 2
+        WHEN MONTH(e.fecha_entrega) BETWEEN 9 AND 12 THEN 3
+    END  
+    AND bt.mes = MONTH(e.fecha_entrega)
     GROUP BY 
         bt.codigo,  -- Agrupar por código de tiempo (mensual)
         bu.codigo
@@ -655,7 +681,6 @@ SELECT
 FROM [MVM].[BI_D_Sucursal] s
 CROSS JOIN [MVM].[BI_D_Tiempo] ts
 LEFT JOIN (
-    -- Agregación de ingresos por sucursal/tiempo
     SELECT 
         sucursal_codigo,
         tiempo_codigo,
@@ -664,7 +689,6 @@ LEFT JOIN (
     GROUP BY sucursal_codigo, tiempo_codigo
 ) f_total ON f_total.sucursal_codigo = s.codigo AND f_total.tiempo_codigo = ts.codigo
 LEFT JOIN (
-    -- Agregación de egresos por sucursal/tiempo
     SELECT 
         sucursal_codigo,
         tiempo_codigo,
@@ -678,49 +702,56 @@ GO
 CREATE OR ALTER VIEW [MVM].[VIEW_2] AS
 SELECT 
     bu.provincia,
-    bs.nro_sucursal AS sucursal,
     bt.anio,
     bt.cuatrimestre,
-    bt.mes,
-    SUM(hf.subtotal) / SUM(hf.cantidad_facturas) AS promedio_importe_total
+    (SUM(hf.subtotal) / SUM(hf.cantidad_facturas)/4) AS promedio_importe_mensual_cuatrimestre
 FROM [MVM].[BI_H_Factura] hf
 JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = hf.sucursal_codigo
 JOIN [MVM].[BI_D_Ubicacion] bu ON bu.codigo = bs.ubicacion_sucursal_codigo
 JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = hf.tiempo_codigo
-GROUP BY bu.provincia, bs.nro_sucursal, bt.anio, bt.cuatrimestre, bt.mes
+GROUP BY bu.provincia, bt.anio, bt.cuatrimestre
 GO
 
 -- Vista 3: Los 3 modelos más vendidos por sucursal y cuatrimestre
+
 CREATE OR ALTER VIEW [MVM].[VIEW_3] AS
-WITH Top3Modelos AS (
-    SELECT TOP 3
-        bm.nombre_modelo
+WITH VentasPorModelo AS (
+    SELECT 
+        bm.nombre_modelo AS modelo,
+        bu.localidad,
+        bt.anio,
+        bt.cuatrimestre,
+        bre.rango_detalle,
+        SUM(bf.cantidad_sillones) AS total_sillones_vendidos,
+        ROW_NUMBER() OVER (
+            PARTITION BY bu.localidad, bt.anio, bt.cuatrimestre, bre.rango_detalle
+            ORDER BY SUM(bf.cantidad_sillones) DESC
+        ) AS ranking
     FROM [MVM].[BI_H_Factura] bf
+    JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bf.sucursal_codigo
+    JOIN [MVM].[BI_D_Ubicacion] bu ON bu.codigo = bs.ubicacion_sucursal_codigo
+    JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bf.tiempo_codigo
+    JOIN [MVM].[BI_D_Rango_Etario] bre ON bre.codigo = bf.rango_etario_codigo
     JOIN [MVM].[BI_D_Modelo] bm ON bm.codigo = bf.modelo_codigo
-    GROUP BY bm.nombre_modelo
-    ORDER BY SUM(bf.cantidad_sillones) DESC
+    GROUP BY 
+        bm.nombre_modelo,
+        bu.localidad, 
+        bt.anio, 
+        bt.cuatrimestre, 
+        bre.rango_detalle, bre.codigo
 )
 SELECT 
-    bm.nombre_modelo AS modelo,
-    bu.localidad,
-    bt.anio,
-    bt.cuatrimestre,
-    bre.rango_detalle,
-    SUM(bf.cantidad_sillones) AS total_sillones_vendidos
-FROM [MVM].[BI_H_Factura] bf
-JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = bf.sucursal_codigo
-JOIN [MVM].[BI_D_Ubicacion] bu ON bu.codigo = bs.ubicacion_sucursal_codigo
-JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = bf.tiempo_codigo
-JOIN [MVM].[BI_D_Rango_Etario] bre ON bre.codigo = bf.rango_etario_codigo
-JOIN [MVM].[BI_D_Modelo] bm ON bm.codigo = bf.modelo_codigo
-WHERE bm.nombre_modelo IN (SELECT nombre_modelo FROM Top3Modelos)
-GROUP BY 
-    bm.nombre_modelo,
-    bu.localidad, 
-    bt.anio, 
-    bt.cuatrimestre, 
-    bre.rango_detalle
+    modelo,
+    localidad,
+    anio,
+    cuatrimestre,
+    rango_detalle,
+    total_sillones_vendidos,
+    ranking
+FROM VentasPorModelo
+WHERE ranking <= 3
 GO
+
 -- Vista 4: Volumen de pedidos por turno, sucursal, mes y año
 CREATE OR ALTER VIEW [MVM].[VIEW_4] AS
 SELECT 
@@ -742,14 +773,14 @@ SELECT
     be.tipo AS estado,
     bs.nro_sucursal AS sucursal,
     bt.cuatrimestre,
-    CAST(SUM(hp.total_pedido) * 100.0 / NULLIF(SUM(SUM(hp.total_pedido)) OVER (
-        PARTITION BY bs.nro_sucursal, bt.cuatrimestre
+    CAST(SUM(hp.cantidad_pedidos) * 100.0 / NULLIF(SUM(SUM(hp.cantidad_pedidos)) OVER (
+        PARTITION BY bs.nro_sucursal, bt.cuatrimestre, bt.anio
     ), 0) AS DECIMAL(5,2)) AS porcentaje_pedidos
 FROM [MVM].[BI_H_Pedido] hp
 JOIN [MVM].[BI_D_Sucursal] bs ON bs.codigo = hp.sucursal_codigo
 JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = hp.tiempo_codigo
 JOIN [MVM].[BI_D_Estado] be ON be.codigo = hp.estado_codigo
-GROUP BY be.tipo, bs.nro_sucursal, bt.cuatrimestre
+GROUP BY be.tipo, bs.nro_sucursal, bt.cuatrimestre, bt.anio
 GO
 
 -- Vista 6: Tiempo promedio de facturación por sucursal, cuatrimestre y año
@@ -775,6 +806,7 @@ FROM [MVM].[BI_H_Compra] hc
 JOIN [MVM].[BI_D_Tiempo] bt ON bt.codigo = hc.tiempo_codigo
 GROUP BY bt.anio, bt.mes
 GO
+
 
 -- Vista 8: Total gastado por tipo de material, sucursal, año y cuatrimestre
 CREATE OR ALTER VIEW [MVM].[VIEW_8] AS
